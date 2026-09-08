@@ -40,5 +40,7 @@ rust_cluster_indices <- function(x, cluster, k) .Call(wrap__rust_cluster_indices
 
 rust_slic <- function(x, xy, nb, init, lambda, s_nom, n_iter, adaptive, alpha, min_patch, tol) .Call(wrap__rust_slic, x, xy, nb, init, lambda, s_nom, n_iter, adaptive, alpha, min_patch, tol)
 
+rust_energy <- function(x, y) .Call(wrap__rust_energy, x, y)
+
 
 # nolint end

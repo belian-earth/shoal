@@ -5,6 +5,7 @@ use petal_neighbors::distance::{Cosine, Euclidean};
 
 mod convert;
 mod dist;
+mod energy;
 mod evoc;
 mod gmm;
 mod hclust;
@@ -497,6 +498,17 @@ fn rust_slic(
     )
 }
 
+
+// Two-sample energy distance: mean cross-pair and within-sample distances.
+#[extendr]
+fn rust_energy(x: RMatrix<f64>, y: RMatrix<f64>) -> List {
+    let d = x.ncols();
+    let xr = row_major(&x);
+    let yr = row_major(&y);
+    let e = threads::pool().install(|| energy::energy(&xr, &yr, d));
+    list!(cross = e.cross, self_x = e.self_x, self_y = e.self_y)
+}
+
 extendr_module! {
     mod shoal;
     fn rust_set_threads;
@@ -514,4 +526,5 @@ extendr_module! {
     fn rust_silhouette;
     fn rust_cluster_indices;
     fn rust_slic;
+    fn rust_energy;
 }

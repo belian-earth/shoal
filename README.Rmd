@@ -46,6 +46,7 @@ and every function matches or improves on the best R and Python alternatives.
 | `shoal_dist()`                           | Pairwise distances under nine metrics, returned as R's own `dist` so `cmdscale()`, `cluster::pam()` and the rest work without glue. |
 | `shoal_knn()`                            | Exact k-nearest neighbours by kd-tree or parallel scan, same metrics, with a `plot()` that picks `eps` for DBSCAN.                 |
 | `shoal_silhouette()`, `shoal_metrics()`  | Silhouette widths, Calinski-Harabasz and Davies-Bouldin, for choosing the number of clusters.                                       |
+| `shoal_energy()`     | Two-sample energy distance between point clouds of any dimension, reduced in parallel without a distance matrix. |
 
 ## Installation
 

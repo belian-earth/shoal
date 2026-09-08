@@ -42,6 +42,7 @@ reference:
   contents:
   - shoal_silhouette
   - shoal_metrics
+  - shoal_energy
 - title: Methods
   desc: Shared print and plot methods, and prediction for centroid models.
   contents:
