@@ -31,6 +31,7 @@ improves on the best R and Python alternatives.
 | `shoal_hdbscan()` | HDBSCAN | petal-clustering | Clusters have arbitrary shape and varying density. |
 | `shoal_hclust()` | Agglomerative hierarchical | [kodama](https://github.com/diffeo/kodama) | You want a dendrogram and R’s `cutree()` ecosystem. |
 | `shoal_evoc()` | EVoC | In-tree port of [EVoC](https://github.com/TutteInstitute/evoc) | Rows are embedding vectors; you want every granularity at once. |
+| `shoal_slic()` | Graph SLIC superpixels | In-tree | Points have coordinates and a neighbour graph; you want compact, homogeneous patches at a chosen scale. |
 
 | Function | Does |
 |----|----|

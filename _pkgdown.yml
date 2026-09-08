@@ -31,6 +31,7 @@ reference:
   - shoal_hdbscan
   - shoal_evoc
   - shoal_hclust
+  - shoal_slic
 - title: Distances
   desc: Pairwise distance matrices and nearest-neighbour search.
   contents:

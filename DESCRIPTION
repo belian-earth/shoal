@@ -29,6 +29,7 @@ Imports:
     viridisLite
 Suggests:
     dbscan,
+    igraph,
     knitr,
     mlbench,
     rmarkdown,
