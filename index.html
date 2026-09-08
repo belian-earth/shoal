@@ -22,8 +22,8 @@
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="High-Performance Clustering via Rust">
-<meta name="description" content="A small, foundational set of clustering algorithms with Rust backends, presented behind one consistent interface: k-means and Gaussian mixtures via linfa, the density-based methods DBSCAN and HDBSCAN via petal-clustering, agglomerative hierarchical clustering via kodama, and EVoC, direct multi-granularity clustering of embedding vectors, via an in-tree port of the reference implementation. All algorithms return objects sharing a common class, so printing and plotting behave identically whichever algorithm produced the result.">
-<meta property="og:description" content="A small, foundational set of clustering algorithms with Rust backends, presented behind one consistent interface: k-means and Gaussian mixtures via linfa, the density-based methods DBSCAN and HDBSCAN via petal-clustering, agglomerative hierarchical clustering via kodama, and EVoC, direct multi-granularity clustering of embedding vectors, via an in-tree port of the reference implementation. All algorithms return objects sharing a common class, so printing and plotting behave identically whichever algorithm produced the result.">
+<meta name="description" content="A small, foundational set of clustering algorithms with Rust backends, presented behind one consistent interface: k-means and Gaussian mixtures via linfa, the density-based methods DBSCAN and HDBSCAN via petal-clustering, agglomerative hierarchical clustering via kodama, EVoC, direct multi-granularity clustering of embedding vectors, via an in-tree port of the reference implementation, and graph SLIC superpixels over any point set with a neighbour graph. All algorithms return objects sharing a common class, so printing and plotting behave identically whichever algorithm produced the result.">
+<meta property="og:description" content="A small, foundational set of clustering algorithms with Rust backends, presented behind one consistent interface: k-means and Gaussian mixtures via linfa, the density-based methods DBSCAN and HDBSCAN via petal-clustering, agglomerative hierarchical clustering via kodama, EVoC, direct multi-granularity clustering of embedding vectors, via an in-tree port of the reference implementation, and graph SLIC superpixels over any point set with a neighbour graph. All algorithms return objects sharing a common class, so printing and plotting behave identically whichever algorithm produced the result.">
 <meta property="og:image" content="https://belian-earth.github.io/shoal/logo.png">
 </head>
 <body>
@@ -74,7 +74,7 @@
 </div>
 <!-- badges: start -->
 
-<p>shoal is a fast, foundational toolkit for clustering in R, with Rust backends behind one consistent interface. Six clustering algorithms, from k-means to EVoC, take a numeric matrix or data frame and return one shared result class that prints and plots the same way, with noise points as <code>NA</code>. Alongside them are the building blocks clustering rests on: pairwise distance matrices and exact nearest-neighbour search under nine metrics, and the indices for choosing the number of clusters on evidence. Everything runs multithreaded, and every function matches or improves on the best R and Python alternatives.</p>
+<p>shoal is a fast, foundational toolkit for clustering in R, with Rust backends behind one consistent interface. Seven clustering algorithms, from k-means to EVoC and graph SLIC, take a numeric matrix or data frame and return one shared result class that prints and plots the same way, with noise points as <code>NA</code>. Alongside them are the building blocks clustering rests on: pairwise distance matrices and exact nearest-neighbour search under nine metrics, and the indices for choosing the number of clusters on evidence. Everything runs multithreaded, and every function matches or improves on the best R and Python alternatives.</p>
 <table class="table">
 <colgroup>
 <col width="25%">
@@ -126,6 +126,12 @@
 </td>
 <td>Rows are embedding vectors; you want every granularity at once.</td>
 </tr>
+<tr>
+<td><code><a href="reference/shoal_slic.html">shoal_slic()</a></code></td>
+<td>Graph SLIC superpixels</td>
+<td>In-tree</td>
+<td>Points have coordinates and a neighbour graph; you want compact, homogeneous patches at a chosen scale.</td>
+</tr>
 </tbody>
 </table>
 <table class="table">
@@ -151,6 +157,12 @@
 <code><a href="reference/shoal_silhouette.html">shoal_silhouette()</a></code>, <code><a href="reference/shoal_metrics.html">shoal_metrics()</a></code>
 </td>
 <td>Silhouette widths, Calinski-Harabasz and Davies-Bouldin, for choosing the number of clusters.</td>
+</tr>
+<tr>
+<td>
+<code><a href="reference/shoal_energy.html">shoal_energy()</a></code>, <code><a href="reference/shoal_energy.html">shoal_energy_self()</a></code>
+</td>
+<td>Two-sample energy distance between point clouds of any dimension, reduced in parallel without a distance matrix; the self term alone, for reuse across comparisons.</td>
 </tr>
 </tbody>
 </table>

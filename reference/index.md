@@ -16,6 +16,8 @@ Clustering algorithms.
   : EVoC: Embedding Vector Oriented Clustering
 - [`shoal_hclust()`](https://belian-earth.github.io/shoal/reference/shoal_hclust.md)
   : Hierarchical Agglomerative Clustering
+- [`shoal_slic()`](https://belian-earth.github.io/shoal/reference/shoal_slic.md)
+  : Graph SLIC Superpixels
 
 ## Distances
 
@@ -36,6 +38,9 @@ Assessing a clustering, and choosing the number of clusters.
   : Silhouette Widths
 - [`shoal_metrics()`](https://belian-earth.github.io/shoal/reference/shoal_metrics.md)
   : Internal Cluster Validity Indices
+- [`shoal_energy()`](https://belian-earth.github.io/shoal/reference/shoal_energy.md)
+  [`shoal_energy_self()`](https://belian-earth.github.io/shoal/reference/shoal_energy.md)
+  : Two-Sample Energy Distance
 
 ## Methods
 
@@ -50,6 +55,7 @@ Shared print and plot methods, and prediction for centroid models.
   [`print(`*`<shoal_evoc>`*`)`](https://belian-earth.github.io/shoal/reference/print.shoal.md)
   [`print(`*`<shoal_kmeans>`*`)`](https://belian-earth.github.io/shoal/reference/print.shoal.md)
   [`print(`*`<shoal_gmm>`*`)`](https://belian-earth.github.io/shoal/reference/print.shoal.md)
+  [`print(`*`<shoal_slic>`*`)`](https://belian-earth.github.io/shoal/reference/print.shoal.md)
   : Print a clustering result
 - [`predict(`*`<shoal_kmeans>`*`)`](https://belian-earth.github.io/shoal/reference/predict.shoal_kmeans.md)
   : Assign New Observations to Fitted Clusters

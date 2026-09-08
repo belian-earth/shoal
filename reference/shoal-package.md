@@ -39,16 +39,31 @@ cluster vector wherever an algorithm has them.
   EVoC, direct multi-granularity clustering of embedding vectors,
   returning every cluster layer rather than one flat partition.
 
+- [`shoal_slic()`](https://belian-earth.github.io/shoal/reference/shoal_slic.md):
+  graph SLIC superpixels, compact feature-homogeneous patches over any
+  point set with coordinates and a neighbour graph.
+
 ## Supporting functions
 
 - [`shoal_dist()`](https://belian-earth.github.io/shoal/reference/shoal_dist.md):
   pairwise distance matrices, returning a standard
   [stats::dist](https://rdrr.io/r/stats/dist.html) object.
 
+- [`shoal_knn()`](https://belian-earth.github.io/shoal/reference/shoal_knn.md):
+  exact k-nearest neighbours, also the neighbour graph
+  [`shoal_slic()`](https://belian-earth.github.io/shoal/reference/shoal_slic.md)
+  runs on.
+
 - [`shoal_silhouette()`](https://belian-earth.github.io/shoal/reference/shoal_silhouette.md)
   and
   [`shoal_metrics()`](https://belian-earth.github.io/shoal/reference/shoal_metrics.md):
   validity measures for choosing the number of clusters.
+
+- [`shoal_energy()`](https://belian-earth.github.io/shoal/reference/shoal_energy.md)
+  and
+  [`shoal_energy_self()`](https://belian-earth.github.io/shoal/reference/shoal_energy.md):
+  the two-sample energy distance between point clouds, for comparing
+  distributions without clustering them.
 
 - [`shoal_palette()`](https://belian-earth.github.io/shoal/reference/shoal_palette.md):
   the default cluster colours used by

@@ -22,6 +22,9 @@ print(x, ...)
 
 # S3 method for class 'shoal_gmm'
 print(x, ...)
+
+# S3 method for class 'shoal_slic'
+print(x, ...)
 ```
 
 ## Arguments

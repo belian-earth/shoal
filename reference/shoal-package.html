@@ -77,14 +77,21 @@ clusters of varying density and scores outliers.</p></li>
 linkage methods, returning a standard <a href="https://rdrr.io/r/stats/hclust.html" class="external-link">stats::hclust</a> object.</p></li>
 <li><p><code><a href="shoal_evoc.html">shoal_evoc()</a></code>: EVoC, direct multi-granularity clustering of embedding
 vectors, returning every cluster layer rather than one flat partition.</p></li>
+<li><p><code><a href="shoal_slic.html">shoal_slic()</a></code>: graph SLIC superpixels, compact feature-homogeneous
+patches over any point set with coordinates and a neighbour graph.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="supporting-functions">Supporting functions<a class="anchor" aria-label="anchor" href="#supporting-functions"></a></h2>
 
 <ul><li><p><code><a href="shoal_dist.html">shoal_dist()</a></code>: pairwise distance matrices, returning a standard
 <a href="https://rdrr.io/r/stats/dist.html" class="external-link">stats::dist</a> object.</p></li>
+<li><p><code><a href="shoal_knn.html">shoal_knn()</a></code>: exact k-nearest neighbours, also the neighbour graph
+<code><a href="shoal_slic.html">shoal_slic()</a></code> runs on.</p></li>
 <li><p><code><a href="shoal_silhouette.html">shoal_silhouette()</a></code> and <code><a href="shoal_metrics.html">shoal_metrics()</a></code>: validity measures for
 choosing the number of clusters.</p></li>
+<li><p><code><a href="shoal_energy.html">shoal_energy()</a></code> and <code><a href="shoal_energy.html">shoal_energy_self()</a></code>: the two-sample energy
+distance between point clouds, for comparing distributions without
+clustering them.</p></li>
 <li><p><code><a href="shoal_palette.html">shoal_palette()</a></code>: the default cluster colours used by <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>.</p></li>
 <li><p><code><a href="shoal_threads.html">shoal_threads()</a></code>: the size of the thread pool the Rust backends use.</p></li>
 </ul></div>

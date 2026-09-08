@@ -465,3 +465,4 @@ and leaves the decision to you.
 | Arbitrary shapes at varying density | [`shoal_hdbscan()`](https://belian-earth.github.io/shoal/reference/shoal_hdbscan.md) |
 | A dendrogram, or cuts at several `k` | [`shoal_hclust()`](https://belian-earth.github.io/shoal/reference/shoal_hclust.md) |
 | Embedding vectors, thousands of rows or more | [`shoal_evoc()`](https://belian-earth.github.io/shoal/reference/shoal_evoc.md) |
+| Coordinates and a neighbour graph; you want patches, not clusters | [`shoal_slic()`](https://belian-earth.github.io/shoal/reference/shoal_slic.md) |
