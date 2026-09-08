@@ -10,6 +10,7 @@ shoal_slic(
   nb,
   init,
   lambda = 1,
+  lambda_scale = NULL,
   s_nom = 1,
   n_iter = 25L,
   adaptive = c("none", "mean"),
@@ -19,9 +20,10 @@ shoal_slic(
 )
 }
 \arguments{
-\item{x}{A numeric matrix or data frame of features, one row per point.
-Data frames are coerced to a matrix using their numeric columns. Rows
-with missing or non-finite values are an error.}
+\item{x}{A numeric matrix or data frame of features, one row per point
+and any number of columns, one included. Data frames are coerced to a
+matrix using their numeric columns. Rows with missing or non-finite
+values are an error.}
 
 \item{xy}{A numeric matrix with two columns of coordinates, one row per
 point, in the units \code{s_nom} is expressed in.}
@@ -35,8 +37,12 @@ set to \code{NA}. Need not be symmetric.}
 Any labelling works; a regular tiling at the intended patch scale is
 the usual choice.}
 
-\item{lambda}{Spatial weight at \code{s_nom}. Ignored when \code{adaptive} is not
-\code{"none"}.}
+\item{lambda}{Spatial weight at \code{s_nom}. Ignored when \code{lambda_scale} is
+given or \code{adaptive} is not \code{"none"}.}
+
+\item{lambda_scale}{Optional. Sets the spatial weight to this multiple of
+the median of \code{init_stat}, so one setting carries across data of
+different feature scales. Ignored when \code{adaptive} is not \code{"none"}.}
 
 \item{s_nom}{Nominal radius, in the units of \code{xy}. Default \code{1}.}
 
@@ -47,7 +53,8 @@ whether that was enough: the count typically decays geometrically.}
 for per-patch weights of \code{alpha} times the patch's mean squared
 feature distance.}
 
-\item{alpha}{Multiplier for \code{adaptive = "mean"}.}
+\item{alpha}{Multiplier for \code{adaptive = "mean"}; required then, ignored
+otherwise.}
 
 \item{min_patch}{Smallest patch kept after relaxation, in points. Default
 \code{1L} keeps every component.}
@@ -58,10 +65,13 @@ iteration. Default \code{0} runs all \code{n_iter}.}
 \value{
 An object of class \code{c("shoal_slic", "shoal_clustering")}: a list
 with components \code{cluster} (integer patch labels), \code{n_clusters},
-\code{n_noise} (always \code{0}), \code{data}, \code{algorithm}, \code{params}, \code{moves} (points
-moved in each iteration run), \code{init_stat} (per initial label, mean
-squared feature distance to its mean, indexed by label) and
-\code{lambda_median} (median per-patch weight in each iteration run).
+\code{n_noise} (always \code{0}), \code{data}, \code{algorithm}, \code{params} (with \code{lambda}
+the weight actually used, resolved from \code{lambda_scale} where that was
+given), \code{moves} (points
+moved in each iteration run), \code{init_stat} (mean squared feature
+distance of each initial patch's points to its mean, named by the
+values of \code{init}) and \code{lambda_median} (median per-patch weight over
+non-empty patches in each iteration run).
 }
 \description{
 Partitions a point set into compact, feature-homogeneous patches by the
@@ -85,17 +95,20 @@ squared-feature-distance currency of \code{x}. The scale of that currency is
 data dependent, so \code{init_stat} in the result gives the mean squared
 feature distance of each initial patch's points to its mean, the local
 variability statistic of \code{supercells::sc_tune_compactness()}. Expressing
-\code{lambda} as a multiple of, say, its median carries a tuned setting to
-other data. Balancing the two terms one-for-one (\code{lambda} equal to the
-median) is a common default that over-regularises high-dimensional
-embeddings; on those, values of a tenth of the median or less are what
+\code{lambda} as a multiple of its median carries a tuned setting to other
+data, and \code{lambda_scale} does exactly that: the weight used is
+\code{lambda_scale} times the median of \code{init_stat}, and is reported as
+\code{lambda} in the result. Balancing the two terms one-for-one
+(\code{lambda_scale = 1}) is a common default that over-regularises
+high-dimensional embeddings; on those, values of a tenth or less are what
 track the data.
 
 \code{adaptive = "mean"} rescales the spatial term per patch to \code{alpha} times
 that patch's own mean squared feature distance at the start of each
 iteration, in the manner of ASLIC: the balance is then relative to local
 contrast, so homogeneous and heterogeneous regions are regularised alike
-in relative terms.
+in relative terms. The per-patch statistic is floored at \code{1e-4} so a
+perfectly uniform patch keeps a spatial term.
 }
 
 \section{Post-processing}{
@@ -122,6 +135,10 @@ init <- as.integer(factor(paste((g$r - 1) \%/\% 4, (g$c - 1) \%/\% 4)))
 sp <- shoal_slic(x, xy, nb, init, lambda = 0.01, s_nom = 20, n_iter = 10L)
 sp
 table(sp$cluster, x[, 1] > 0.5)[1:5, ]
+
+# The same weight expressed relative to the data's own variability.
+sp2 <- shoal_slic(x, xy, nb, init, lambda_scale = 0.1, s_nom = 20, n_iter = 10L)
+sp2$params$lambda
 
 }
 \references{

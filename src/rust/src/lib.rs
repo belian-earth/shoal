@@ -457,6 +457,7 @@ fn rust_slic(
     nb: RMatrix<i32>,
     init: Vec<i32>,
     lambda: f64,
+    lambda_scale: f64,
     s_nom: f64,
     n_iter: i32,
     adaptive: &str,
@@ -480,6 +481,7 @@ fn rust_slic(
     let init0: Vec<i32> = init.iter().map(|&l| l - 1).collect();
     let params = slic::Params {
         lambda,
+        lambda_scale,
         s_nom,
         n_iter: n_iter as usize,
         adaptive: slic::Adaptive::from_name(adaptive),
@@ -494,19 +496,34 @@ fn rust_slic(
         moves = Integers::from_values(out.moves.iter().map(|&m| Rint::from(m))),
         init_stat = Doubles::from_values(out.init_stat.iter().copied()),
         lambda_median = Doubles::from_values(out.lambda_median.iter().copied()),
+        lambda = out.lambda,
         n_patches = out.n_patches as i32
     )
 }
 
 
-// Two-sample energy distance: mean cross-pair and within-sample distances.
+// Two-sample energy distance: mean cross-pair distance, and the
+// within-sample terms where requested (NA otherwise).
 #[extendr]
-fn rust_energy(x: RMatrix<f64>, y: RMatrix<f64>) -> List {
+fn rust_energy(x: RMatrix<f64>, y: RMatrix<f64>, need_x: bool, need_y: bool) -> List {
     let d = x.ncols();
     let xr = row_major(&x);
     let yr = row_major(&y);
-    let e = threads::pool().install(|| energy::energy(&xr, &yr, d));
-    list!(cross = e.cross, self_x = e.self_x, self_y = e.self_y)
+    let e = threads::pool().install(|| energy::energy(&xr, &yr, d, need_x, need_y));
+    list!(
+        cross = e.cross,
+        self_x = e.self_x.unwrap_or(f64::NAN),
+        self_y = e.self_y.unwrap_or(f64::NAN)
+    )
+}
+
+// Mean within-sample distance of one sample: the self term of the energy
+// distance, for reuse across comparisons.
+#[extendr]
+fn rust_energy_self(x: RMatrix<f64>) -> f64 {
+    let d = x.ncols();
+    let xr = row_major(&x);
+    threads::pool().install(|| energy::self_term(&xr, d))
 }
 
 extendr_module! {
@@ -527,4 +544,5 @@ extendr_module! {
     fn rust_cluster_indices;
     fn rust_slic;
     fn rust_energy;
+    fn rust_energy_self;
 }

@@ -113,7 +113,49 @@ test_that("init_stat is the per-tile mean squared distance to the tile mean", {
   init <- as.integer(factor(cs$init))
   pm <- rowsum(cs$x, init) / tabulate(init)
   d2 <- rowSums((cs$x - pm[init, ])^2)
-  expect_equal(sp$init_stat, as.numeric(rowsum(d2, init) / tabulate(init)))
+  expect_equal(unname(sp$init_stat), as.numeric(rowsum(d2, init) / tabulate(init)))
+  expect_identical(names(sp$init_stat), as.character(sort(unique(cs$init))))
+})
+
+test_that("lambda_scale resolves to a multiple of the median init_stat", {
+  cs <- grid_case()
+  sc <- shoal_slic(cs$x, cs$xy, cs$nb, cs$init, lambda_scale = 0.1, s_nom = 20, n_iter = 6L)
+  lam <- 0.1 * stats::median(sc$init_stat)
+  expect_equal(sc$params$lambda, lam)
+  expect_equal(sc$params$lambda_scale, 0.1)
+  expect_true(all(sc$lambda_median == lam))
+  fx <- shoal_slic(cs$x, cs$xy, cs$nb, cs$init, lambda = lam, s_nom = 20, n_iter = 6L)
+  expect_identical(sc$cluster, fx$cluster)
+  expect_true(is.na(fx$params$lambda_scale))
+  expect_error(shoal_slic(cs$x, cs$xy, cs$nb, cs$init, lambda_scale = -1), "lambda_scale")
+})
+
+test_that("a single feature column is accepted", {
+  cs <- grid_case()
+  sp <- shoal_slic(cs$x[, 1, drop = FALSE], cs$xy, cs$nb, cs$init, lambda = 0.02, s_nom = 20, n_iter = 5L)
+  expect_identical(ncol(sp$data), 1L)
+  left <- cs$g$c <= 12
+  expect_length(intersect(unique(sp$cluster[left]), unique(sp$cluster[!left])), 0L)
+})
+
+test_that("lambda_median in adaptive mode ignores patches that emptied", {
+  # Patch 2 is the two opposite corners, whose feature mean equals patch 1's,
+  # so their feature costs tie and the far larger adaptive weight of patch 2
+  # sends both corners to patch 1 on the first move. Patch 2 is then empty
+  # and must not enter the median.
+  xy <- as.matrix(expand.grid(c = 1:8, r = 1:8)) * 1.0
+  x <- matrix(1, 64L, 2L)
+  x[1L, 1L] <- 0
+  x[64L, 1L] <- 2
+  nn <- shoal_knn(xy, k = 4L)
+  nb <- nn$id
+  nb[nn$dist > 1] <- NA
+  init <- rep(1L, 64L)
+  init[c(1L, 64L)] <- 2L
+  sp <- shoal_slic(x, xy, nb, init, adaptive = "mean", alpha = 1, s_nom = 4, n_iter = 2L)
+  expect_identical(sp$n_clusters, 1L)
+  expect_identical(sp$moves, c(2L, 0L))
+  expect_equal(sp$lambda_median, c((1 + 1e-4) / 2, 2 / 64))
 })
 
 test_that("early stopping and input validation behave", {

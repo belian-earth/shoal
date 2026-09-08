@@ -22,13 +22,20 @@
 #'   linkage methods, returning a standard [stats::hclust] object.
 #' - [shoal_evoc()]: EVoC, direct multi-granularity clustering of embedding
 #'   vectors, returning every cluster layer rather than one flat partition.
+#' - [shoal_slic()]: graph SLIC superpixels, compact feature-homogeneous
+#'   patches over any point set with coordinates and a neighbour graph.
 #'
 #' # Supporting functions
 #'
 #' - [shoal_dist()]: pairwise distance matrices, returning a standard
 #'   [stats::dist] object.
+#' - [shoal_knn()]: exact k-nearest neighbours, also the neighbour graph
+#'   [shoal_slic()] runs on.
 #' - [shoal_silhouette()] and [shoal_metrics()]: validity measures for
 #'   choosing the number of clusters.
+#' - [shoal_energy()] and [shoal_energy_self()]: the two-sample energy
+#'   distance between point clouds, for comparing distributions without
+#'   clustering them.
 #' - [shoal_palette()]: the default cluster colours used by `plot()`.
 #' - [shoal_threads()]: the size of the thread pool the Rust backends use.
 #'

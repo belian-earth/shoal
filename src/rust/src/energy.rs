@@ -17,8 +17,9 @@ use rayon::prelude::*;
 
 pub struct Energy {
     pub cross: f64,
-    pub self_x: f64,
-    pub self_y: f64,
+    /// `None` where the caller supplied the term.
+    pub self_x: Option<f64>,
+    pub self_y: Option<f64>,
 }
 
 fn norms(x: &[f64], d: usize) -> Vec<f64> {
@@ -50,6 +51,13 @@ fn mean_cross(x: &[f64], nx: &[f64], y: &[f64], ny: &[f64], d: usize) -> f64 {
     total / (nx.len() as f64 * ny.len() as f64)
 }
 
+/// Mean Euclidean distance over all distinct pairs within `x` (row-major
+/// `n x d`). Runs on the current pool.
+pub fn self_term(x: &[f64], d: usize) -> f64 {
+    let nx = norms(x, d);
+    mean_self(x, &nx, d)
+}
+
 /// Mean Euclidean distance over all distinct pairs within `x`.
 fn mean_self(x: &[f64], nx: &[f64], d: usize) -> f64 {
     let n = nx.len();
@@ -72,14 +80,16 @@ fn mean_self(x: &[f64], nx: &[f64], d: usize) -> f64 {
     2.0 * total / (n as f64 * (n as f64 - 1.0))
 }
 
-/// `x` row-major `n x d`, `y` row-major `m x d`. Runs on the current pool.
-pub fn energy(x: &[f64], y: &[f64], d: usize) -> Energy {
+/// `x` row-major `n x d`, `y` row-major `m x d`. The within-sample terms
+/// are computed only where requested, so a fixed sample's term can be
+/// reused across comparisons. Runs on the current pool.
+pub fn energy(x: &[f64], y: &[f64], d: usize, need_x: bool, need_y: bool) -> Energy {
     let nx = norms(x, d);
     let ny = norms(y, d);
     Energy {
         cross: mean_cross(x, &nx, y, &ny, d),
-        self_x: mean_self(x, &nx, d),
-        self_y: mean_self(y, &ny, d),
+        self_x: need_x.then(|| mean_self(x, &nx, d)),
+        self_y: need_y.then(|| mean_self(y, &ny, d)),
     }
 }
 
@@ -90,11 +100,14 @@ mod tests {
     #[test]
     fn identical_samples_have_zero_energy() {
         let x: Vec<f64> = (0..40).map(|i| (i as f64 * 0.37).sin()).collect();
-        let e = energy(&x, &x, 2);
-        let ed = 2.0 * e.cross - e.self_x - e.self_y;
+        let e = energy(&x, &x, 2, true, true);
+        let (sx, sy) = (e.self_x.unwrap(), e.self_y.unwrap());
+        let ed = 2.0 * e.cross - sx - sy;
         // cross includes the zero-distance diagonal, so E is slightly negative
         // for a finite sample compared with itself: -2 self / n.
-        assert!((ed + 2.0 * e.self_x / 20.0).abs() < 1e-12, "{ed}");
+        assert!((ed + 2.0 * sx / 20.0).abs() < 1e-12, "{ed}");
+        assert_eq!(self_term(&x, 2), sx);
+        assert!(energy(&x, &x, 2, false, true).self_x.is_none());
     }
 
     #[test]
@@ -102,8 +115,9 @@ mod tests {
         let x: Vec<f64> = (0..60).map(|i| (i as f64 * 0.37).sin()).collect();
         let y: Vec<f64> = x.iter().map(|v| v + 0.5).collect();
         let z: Vec<f64> = x.iter().map(|v| v + 2.0).collect();
-        let ey = energy(&x, &y, 3);
-        let ez = energy(&x, &z, 3);
-        assert!(2.0 * ez.cross - ez.self_x - ez.self_y > 2.0 * ey.cross - ey.self_x - ey.self_y);
+        let ey = energy(&x, &y, 3, true, true);
+        let ez = energy(&x, &z, 3, true, true);
+        let ed = |e: &Energy| 2.0 * e.cross - e.self_x.unwrap() - e.self_y.unwrap();
+        assert!(ed(&ez) > ed(&ey));
     }
 }

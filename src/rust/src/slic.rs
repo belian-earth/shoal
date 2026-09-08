@@ -52,6 +52,10 @@ impl Adaptive {
 
 pub struct Params {
     pub lambda: f64,
+    /// When positive, `lambda` is replaced by this multiple of the median
+    /// `init_stat` before the first iteration; any other value is "unset"
+    /// (R cannot pass NA through extendr as an `f64`).
+    pub lambda_scale: f64,
     pub s_nom: f64,
     pub n_iter: usize,
     pub adaptive: Adaptive,
@@ -70,9 +74,12 @@ pub struct Output {
     /// mean, indexed by initial label: the local-variability statistic a
     /// data-driven `lambda` is scaled from.
     pub init_stat: Vec<f64>,
-    /// Median of `lambda_p` over patches in each iteration run (constant in
-    /// the fixed mode).
+    /// Median of `lambda_p` over non-empty patches in each iteration run
+    /// (constant in the fixed mode).
     pub lambda_median: Vec<f64>,
+    /// The global spatial weight used: `lambda`, or the value resolved from
+    /// `lambda_scale`.
+    pub lambda: f64,
     pub n_patches: usize,
 }
 
@@ -97,6 +104,7 @@ pub fn graph_slic(x: &[f64], d: usize, xy: &[f64], g: &Graph, init: &[i32], p: &
     assert_eq!(xy.len(), n * 2);
     assert_eq!(g.nb.len(), n * g.k);
     let s2 = p.s_nom * p.s_nom;
+    let mut lambda = p.lambda;
 
     let mut labels: Vec<i32> = init.to_vec();
     let mut next = vec![0i32; n];
@@ -131,12 +139,16 @@ pub fn graph_slic(x: &[f64], d: usize, xy: &[f64], g: &Graph, init: &[i32], p: &
         };
         if it == 0 {
             init_stat = stat.clone();
+            if p.lambda_scale > 0.0 {
+                lambda = p.lambda_scale * median(&stat);
+            }
         }
         let lam: Vec<f64> = match p.adaptive {
-            Adaptive::None => vec![p.lambda; np],
+            Adaptive::None => vec![lambda; np],
             Adaptive::Mean => stat.iter().map(|&s| p.alpha * s.max(1e-4)).collect(),
         };
-        lambda_median.push(median(&lam));
+        let live: Vec<f64> = (0..np).filter(|&l| cnt[l] > 0).map(|l| lam[l]).collect();
+        lambda_median.push(median(&live));
 
         // One independent decision per boundary point.
         let dist = |i: usize, l: usize| -> f64 {
@@ -189,6 +201,7 @@ pub fn graph_slic(x: &[f64], d: usize, xy: &[f64], g: &Graph, init: &[i32], p: &
         moves,
         init_stat,
         lambda_median,
+        lambda,
         n_patches,
     }
 }
@@ -439,7 +452,7 @@ mod tests {
     fn patches_follow_the_feature_seam() {
         let (x, xy, nb, init) = grid();
         let g = Graph { nb: &nb, k: 4 };
-        let p = Params { lambda: 0.01, s_nom: 10.0, n_iter: 10, adaptive: Adaptive::None, alpha: 0.0, min_patch: 1, tol: 0.0 };
+        let p = Params { lambda: 0.01, lambda_scale: -1.0, s_nom: 10.0, n_iter: 10, adaptive: Adaptive::None, alpha: 0.0, min_patch: 1, tol: 0.0 };
         let out = graph_slic(&x, 2, &xy, &g, &init, &p);
         // No patch straddles the seam between columns 2 and 3.
         for r in 0..6 {
@@ -454,7 +467,7 @@ mod tests {
     fn dust_is_absorbed_and_labels_are_dense() {
         let (x, xy, nb, init) = grid();
         let g = Graph { nb: &nb, k: 4 };
-        let p = Params { lambda: 0.01, s_nom: 10.0, n_iter: 5, adaptive: Adaptive::Mean, alpha: 0.1, min_patch: 6, tol: 0.0 };
+        let p = Params { lambda: 0.01, lambda_scale: -1.0, s_nom: 10.0, n_iter: 5, adaptive: Adaptive::Mean, alpha: 0.1, min_patch: 6, tol: 0.0 };
         let out = graph_slic(&x, 2, &xy, &g, &init, &p);
         let mut cnt = vec![0usize; out.n_patches];
         for &l in &out.labels {
@@ -462,6 +475,20 @@ mod tests {
         }
         assert!(cnt.iter().all(|&c| c >= 6), "{cnt:?}");
         assert_eq!(out.lambda_median.len(), 5);
+    }
+
+    #[test]
+    fn lambda_scale_resolves_from_the_median_init_stat() {
+        let (x, xy, nb, init) = grid();
+        let g = Graph { nb: &nb, k: 4 };
+        let p = Params { lambda: f64::NAN, lambda_scale: 0.5, s_nom: 10.0, n_iter: 3, adaptive: Adaptive::None, alpha: 0.0, min_patch: 1, tol: 0.0 };
+        let out = graph_slic(&x, 2, &xy, &g, &init, &p);
+        let expect = 0.5 * median(&out.init_stat);
+        assert!((out.lambda - expect).abs() < 1e-12);
+        assert!(out.lambda_median.iter().all(|&m| (m - expect).abs() < 1e-12));
+        let q = Params { lambda: expect, lambda_scale: -1.0, ..p };
+        let fixed = graph_slic(&x, 2, &xy, &g, &init, &q);
+        assert_eq!(out.labels, fixed.labels);
     }
 
     #[test]

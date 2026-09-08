@@ -2,21 +2,34 @@
 % Please edit documentation in R/energy.R
 \name{shoal_energy}
 \alias{shoal_energy}
+\alias{shoal_energy_self}
 \title{Two-Sample Energy Distance}
 \usage{
-shoal_energy(x, y, terms = FALSE)
+shoal_energy(x, y, terms = FALSE, self_x = NULL, self_y = NULL)
+
+shoal_energy_self(x)
 }
 \arguments{
 \item{x, y}{Numeric matrices or data frames with the same number of
-columns. Data frames are coerced to matrices using their numeric
-columns. Rows with missing or non-finite values are an error.}
+columns, one included. Data frames are coerced to matrices using their
+numeric columns. Rows with missing or non-finite values are an error.}
 
 \item{terms}{Also return the three mean distances. Default \code{FALSE}.}
+
+\item{self_x, self_y}{Optional precomputed within-sample terms from
+\code{shoal_energy_self()}, used in place of computing them.
+
+The cross term averages over all \verb{n m} pairs, including the zero
+distances between a row and its own copy when \code{x} and \code{y} share rows, so
+a sample compared with itself comes out slightly below zero before the
+floor at zero is applied.}
 }
 \value{
-The energy distance, a single non-negative number; with
-\code{terms = TRUE}, a list with \code{energy}, \code{cross} (mean cross-pair
-distance), \code{self_x} and \code{self_y} (mean within-sample distances).
+\code{shoal_energy()}: the energy distance, a single non-negative
+number; with \code{terms = TRUE}, a list with \code{energy}, \code{cross} (mean
+cross-pair distance), \code{self_x} and \code{self_y} (mean within-sample
+distances). \code{shoal_energy_self()}: the mean distance over all distinct
+pairs of rows of \code{x}, \code{0} for a single row.
 }
 \description{
 The energy distance of Szekely and Rizzo between the rows of \code{x} and the
@@ -33,8 +46,11 @@ directly: two embeddings of the same region in different years, a sample
 against a reference population, or a cluster against the rest.
 
 The three pairwise-distance blocks are reduced row by row in parallel in
-Rust and never held in memory, so the cost is \verb{(n m + n^2 + m^2) d / 2}
-flops and the memory is the two inputs. For unit-normalised rows the
+Rust and never held in memory, so the cost is about
+\verb{(2 n m + n^2 + m^2) d / 2} flops and the memory is the two inputs. When
+one sample is compared against many others its within-sample term is the
+same every time: \code{shoal_energy_self()} computes that term alone, and
+passing it as \code{self_x} or \code{self_y} skips recomputing it. For unit-normalised rows the
 Euclidean distance is a monotone function of cosine distance, so the
 statistic can be used on embeddings that are compared by cosine.
 }
@@ -45,6 +61,11 @@ z <- as.matrix(iris[iris$Species == "virginica", 1:4])
 shoal_energy(x, y)
 shoal_energy(y, z)  # closer pair
 shoal_energy(x, x, terms = TRUE)
+
+# One reference against several samples: compute its own term once.
+self_x <- shoal_energy_self(x)
+shoal_energy(x, y, self_x = self_x)
+shoal_energy(x, z, self_x = self_x)
 
 }
 \references{

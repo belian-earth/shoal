@@ -341,3 +341,4 @@ decision to you.
 | Arbitrary shapes at varying density            | `shoal_hdbscan()`   |
 | A dendrogram, or cuts at several `k`           | `shoal_hclust()`    |
 | Embedding vectors, thousands of rows or more   | `shoal_evoc()`      |
+| Coordinates and a neighbour graph; you want patches, not clusters | `shoal_slic()` |

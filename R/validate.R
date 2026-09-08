@@ -1,13 +1,17 @@
+# `min_cols` is 2 for the clustering algorithms, where a one-column input is
+# almost always a mistake, and 1 where a single feature is a legitimate use
+# (a one-band raster for SLIC, a univariate energy distance).
 check_numeric_matrix <- function(x, na_action = c("drop", "error"),
+                                 min_cols = 2L,
                                  arg = rlang::caller_arg(x),
                                  call = rlang::caller_env()) {
   na_action <- rlang::arg_match(na_action)
 
   if (is.data.frame(x)) {
     numeric_cols <- vapply(x, is.numeric, logical(1L))
-    if (sum(numeric_cols) < 2L) {
+    if (sum(numeric_cols) < min_cols) {
       cli::cli_abort(
-        "{.arg {arg}} data frame must have at least 2 numeric columns.",
+        "{.arg {arg}} data frame must have at least {min_cols} numeric column{?s}.",
         call = call
       )
     }
@@ -19,8 +23,8 @@ check_numeric_matrix <- function(x, na_action = c("drop", "error"),
   if (nrow(x) < 1L) {
     cli::cli_abort("{.arg {arg}} must have at least 1 row.", call = call)
   }
-  if (ncol(x) < 2L) {
-    cli::cli_abort("{.arg {arg}} must have at least 2 columns.", call = call)
+  if (ncol(x) < min_cols) {
+    cli::cli_abort("{.arg {arg}} must have at least {min_cols} column{?s}.", call = call)
   }
 
   # extendr expects a double matrix; an integer one (0/1 presence data, say)

@@ -26,6 +26,31 @@ test_that("energy is symmetric, zero-floored and orders shifted samples", {
   expect_equal(shoal_energy(x, x[sample(nrow(x)), ]), 0)
 })
 
+test_that("precomputed self terms are used and match", {
+  set.seed(5)
+  x <- matrix(rnorm(40 * 4), ncol = 4)
+  y <- matrix(rnorm(30 * 4, mean = 0.5), ncol = 4)
+  full <- shoal_energy(x, y, terms = TRUE)
+  sx <- shoal_energy_self(x)
+  expect_equal(sx, full$self_x)
+  expect_equal(shoal_energy(x, y, self_x = sx), full$energy)
+  got <- shoal_energy(x, y, terms = TRUE, self_x = sx, self_y = full$self_y)
+  expect_equal(got, full)
+  # A supplied term is used as given, not recomputed.
+  expect_equal(shoal_energy(x, y, self_x = 0, terms = TRUE)$self_x, 0)
+  expect_identical(shoal_energy_self(x[1, , drop = FALSE]), 0)
+  expect_error(shoal_energy(x, y, self_x = -1), "non-negative")
+})
+
+test_that("one-column samples are accepted", {
+  set.seed(6)
+  x <- matrix(rnorm(50), ncol = 1)
+  y <- matrix(rnorm(40, mean = 2), ncol = 1)
+  ref <- reference_energy(x, y)
+  expect_equal(shoal_energy(x, y), ref$energy)
+  expect_equal(shoal_energy_self(x), ref$self_x)
+})
+
 test_that("shoal_energy validates its inputs", {
   x <- matrix(rnorm(20), ncol = 2)
   expect_error(shoal_energy(x, matrix(rnorm(30), ncol = 3)), "same number of columns")

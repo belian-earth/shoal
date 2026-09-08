@@ -21,17 +21,20 @@
 #' data dependent, so `init_stat` in the result gives the mean squared
 #' feature distance of each initial patch's points to its mean, the local
 #' variability statistic of `supercells::sc_tune_compactness()`. Expressing
-#' `lambda` as a multiple of, say, its median carries a tuned setting to
-#' other data. Balancing the two terms one-for-one (`lambda` equal to the
-#' median) is a common default that over-regularises high-dimensional
-#' embeddings; on those, values of a tenth of the median or less are what
+#' `lambda` as a multiple of its median carries a tuned setting to other
+#' data, and `lambda_scale` does exactly that: the weight used is
+#' `lambda_scale` times the median of `init_stat`, and is reported as
+#' `lambda` in the result. Balancing the two terms one-for-one
+#' (`lambda_scale = 1`) is a common default that over-regularises
+#' high-dimensional embeddings; on those, values of a tenth or less are what
 #' track the data.
 #'
 #' `adaptive = "mean"` rescales the spatial term per patch to `alpha` times
 #' that patch's own mean squared feature distance at the start of each
 #' iteration, in the manner of ASLIC: the balance is then relative to local
 #' contrast, so homogeneous and heterogeneous regions are regularised alike
-#' in relative terms.
+#' in relative terms. The per-patch statistic is floored at `1e-4` so a
+#' perfectly uniform patch keeps a spatial term.
 #'
 #' # Post-processing
 #'
@@ -44,9 +47,10 @@
 #' own patch, then to the earlier column of `nb`; component ids follow first
 #' appearance in row order.
 #'
-#' @param x A numeric matrix or data frame of features, one row per point.
-#'   Data frames are coerced to a matrix using their numeric columns. Rows
-#'   with missing or non-finite values are an error.
+#' @param x A numeric matrix or data frame of features, one row per point
+#'   and any number of columns, one included. Data frames are coerced to a
+#'   matrix using their numeric columns. Rows with missing or non-finite
+#'   values are an error.
 #' @param xy A numeric matrix with two columns of coordinates, one row per
 #'   point, in the units `s_nom` is expressed in.
 #' @param nb An integer matrix with one row per point whose columns hold the
@@ -56,15 +60,19 @@
 #' @param init An integer vector of initial patch labels, one per point.
 #'   Any labelling works; a regular tiling at the intended patch scale is
 #'   the usual choice.
-#' @param lambda Spatial weight at `s_nom`. Ignored when `adaptive` is not
-#'   `"none"`.
+#' @param lambda Spatial weight at `s_nom`. Ignored when `lambda_scale` is
+#'   given or `adaptive` is not `"none"`.
+#' @param lambda_scale Optional. Sets the spatial weight to this multiple of
+#'   the median of `init_stat`, so one setting carries across data of
+#'   different feature scales. Ignored when `adaptive` is not `"none"`.
 #' @param s_nom Nominal radius, in the units of `xy`. Default `1`.
 #' @param n_iter Iterations. Default `25L`. The `moves` component shows
 #'   whether that was enough: the count typically decays geometrically.
 #' @param adaptive `"none"` (default) for one global `lambda`, or `"mean"`
 #'   for per-patch weights of `alpha` times the patch's mean squared
 #'   feature distance.
-#' @param alpha Multiplier for `adaptive = "mean"`.
+#' @param alpha Multiplier for `adaptive = "mean"`; required then, ignored
+#'   otherwise.
 #' @param min_patch Smallest patch kept after relaxation, in points. Default
 #'   `1L` keeps every component.
 #' @param tol Stop early once fewer than this share of points move in an
@@ -72,10 +80,13 @@
 #'
 #' @returns An object of class `c("shoal_slic", "shoal_clustering")`: a list
 #'   with components `cluster` (integer patch labels), `n_clusters`,
-#'   `n_noise` (always `0`), `data`, `algorithm`, `params`, `moves` (points
-#'   moved in each iteration run), `init_stat` (per initial label, mean
-#'   squared feature distance to its mean, indexed by label) and
-#'   `lambda_median` (median per-patch weight in each iteration run).
+#'   `n_noise` (always `0`), `data`, `algorithm`, `params` (with `lambda`
+#'   the weight actually used, resolved from `lambda_scale` where that was
+#'   given), `moves` (points
+#'   moved in each iteration run), `init_stat` (mean squared feature
+#'   distance of each initial patch's points to its mean, named by the
+#'   values of `init`) and `lambda_median` (median per-patch weight over
+#'   non-empty patches in each iteration run).
 #'
 #' @references Achanta R, Shaji A, Smith K, Lucchi A, Fua P, Süsstrunk S
 #'   (2012). SLIC superpixels compared to state-of-the-art superpixel
@@ -96,11 +107,16 @@
 #' sp
 #' table(sp$cluster, x[, 1] > 0.5)[1:5, ]
 #'
+#' # The same weight expressed relative to the data's own variability.
+#' sp2 <- shoal_slic(x, xy, nb, init, lambda_scale = 0.1, s_nom = 20, n_iter = 10L)
+#' sp2$params$lambda
+#'
 #' @export
-shoal_slic <- function(x, xy, nb, init, lambda = 1, s_nom = 1, n_iter = 25L,
+shoal_slic <- function(x, xy, nb, init, lambda = 1, lambda_scale = NULL,
+                       s_nom = 1, n_iter = 25L,
                        adaptive = c("none", "mean"), alpha = NULL,
                        min_patch = 1L, tol = 0) {
-  x <- check_numeric_matrix(x, na_action = "error")
+  x <- check_numeric_matrix(x, na_action = "error", min_cols = 1L)
   n <- nrow(x)
   xy <- check_numeric_matrix(xy, na_action = "error")
   if (nrow(xy) != n || ncol(xy) != 2L) {
@@ -110,10 +126,16 @@ shoal_slic <- function(x, xy, nb, init, lambda = 1, s_nom = 1, n_iter = 25L,
   if (!rlang::is_integerish(init) || length(init) != n || anyNA(init)) {
     cli::cli_abort("{.arg init} must be an integer vector of length {n} without missing values.")
   }
-  init <- as.integer(factor(init))
+  init <- factor(init)
+  init_levels <- levels(init)
+  init <- as.integer(init)
   adaptive <- rlang::arg_match(adaptive)
   if (identical(adaptive, "none")) {
-    check_positive_number(lambda)
+    if (is.null(lambda_scale)) {
+      check_positive_number(lambda)
+    } else {
+      check_positive_number(lambda_scale)
+    }
     alpha <- 0
   } else {
     if (is.null(alpha)) {
@@ -129,8 +151,9 @@ shoal_slic <- function(x, xy, nb, init, lambda = 1, s_nom = 1, n_iter = 25L,
   }
 
   res <- rust_slic(
-    x, xy, nb, init, as.double(lambda), as.double(s_nom), as.integer(n_iter),
-    adaptive, as.double(alpha), as.integer(min_patch), as.double(tol)
+    x, xy, nb, init, as.double(lambda), as.double(lambda_scale %||% -1),
+    as.double(s_nom), as.integer(n_iter), adaptive, as.double(alpha),
+    as.integer(min_patch), as.double(tol)
   )
 
   new_clustering(
@@ -139,7 +162,8 @@ shoal_slic <- function(x, xy, nb, init, lambda = 1, s_nom = 1, n_iter = 25L,
     algorithm = "Graph SLIC",
     subclass = "shoal_slic",
     params = list(
-      lambda = if (identical(adaptive, "none")) lambda else NA_real_,
+      lambda = if (identical(adaptive, "none")) res$lambda else NA_real_,
+      lambda_scale = if (identical(adaptive, "none")) lambda_scale %||% NA_real_ else NA_real_,
       s_nom = s_nom,
       n_iter = as.integer(n_iter),
       adaptive = adaptive,
@@ -147,7 +171,7 @@ shoal_slic <- function(x, xy, nb, init, lambda = 1, s_nom = 1, n_iter = 25L,
       min_patch = as.integer(min_patch)
     ),
     moves = as.integer(res$moves),
-    init_stat = res$init_stat,
+    init_stat = stats::setNames(res$init_stat, init_levels),
     lambda_median = res$lambda_median
   )
 }
