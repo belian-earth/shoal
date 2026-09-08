@@ -5,6 +5,7 @@ use petal_neighbors::distance::{Cosine, Euclidean};
 
 mod convert;
 mod dist;
+mod energy;
 mod evoc;
 mod gmm;
 mod hclust;
@@ -12,6 +13,7 @@ mod kdtree;
 mod kmeans;
 mod knn;
 mod metrics;
+mod slic;
 mod threads;
 use convert::{
     assignment_vector, partial_labels_from_list, rmatrix_to_array2, rmatrix_to_array2_linfa,
@@ -445,6 +447,85 @@ fn rust_get_threads() -> i32 {
     threads::threads() as i32
 }
 
+
+// Graph SLIC superpixels. `nb` is an integer matrix of one-based neighbour
+// indices with NA for a missing slot; `init` one-based dense labels.
+#[extendr]
+fn rust_slic(
+    x: RMatrix<f64>,
+    xy: RMatrix<f64>,
+    nb: RMatrix<i32>,
+    init: Vec<i32>,
+    lambda: f64,
+    lambda_scale: f64,
+    s_nom: f64,
+    n_iter: i32,
+    adaptive: &str,
+    alpha: f64,
+    min_patch: i32,
+    tol: f64,
+) -> List {
+    let n = x.nrows();
+    let d = x.ncols();
+    let k = nb.ncols();
+    let xr = row_major(&x);
+    let xyr = row_major(&xy);
+    let nb_col = nb.data();
+    let mut nbr = vec![-1i32; n * k];
+    for i in 0..n {
+        for c in 0..k {
+            let v = nb_col[c * n + i];
+            nbr[i * k + c] = if v == i32::MIN || v < 1 { -1 } else { v - 1 };
+        }
+    }
+    let init0: Vec<i32> = init.iter().map(|&l| l - 1).collect();
+    let params = slic::Params {
+        lambda,
+        lambda_scale,
+        s_nom,
+        n_iter: n_iter as usize,
+        adaptive: slic::Adaptive::from_name(adaptive),
+        alpha,
+        min_patch: min_patch as usize,
+        tol,
+    };
+    let g = slic::Graph { nb: &nbr, k };
+    let out = threads::pool().install(|| slic::graph_slic(&xr, d, &xyr, &g, &init0, &params));
+    list!(
+        labels = Integers::from_values(out.labels.iter().map(|&l| Rint::from(l))),
+        moves = Integers::from_values(out.moves.iter().map(|&m| Rint::from(m))),
+        init_stat = Doubles::from_values(out.init_stat.iter().copied()),
+        lambda_median = Doubles::from_values(out.lambda_median.iter().copied()),
+        lambda = out.lambda,
+        n_patches = out.n_patches as i32
+    )
+}
+
+
+// Two-sample energy distance: mean cross-pair distance, and the
+// within-sample terms where requested (NA otherwise).
+#[extendr]
+fn rust_energy(x: RMatrix<f64>, y: RMatrix<f64>, need_x: bool, need_y: bool) -> List {
+    let d = x.ncols();
+    let xr = row_major(&x);
+    let yr = row_major(&y);
+    let e = threads::pool().install(|| energy::energy(&xr, &yr, d, need_x, need_y));
+    list!(
+        cross = e.cross,
+        self_x = e.self_x.unwrap_or(f64::NAN),
+        self_y = e.self_y.unwrap_or(f64::NAN)
+    )
+}
+
+// Mean within-sample distance of one sample: the self term of the energy
+// distance, for reuse across comparisons.
+#[extendr]
+fn rust_energy_self(x: RMatrix<f64>) -> f64 {
+    let d = x.ncols();
+    let xr = row_major(&x);
+    threads::pool().install(|| energy::self_term(&xr, d))
+}
+
 extendr_module! {
     mod shoal;
     fn rust_set_threads;
@@ -461,4 +542,7 @@ extendr_module! {
     fn rust_evoc;
     fn rust_silhouette;
     fn rust_cluster_indices;
+    fn rust_slic;
+    fn rust_energy;
+    fn rust_energy_self;
 }

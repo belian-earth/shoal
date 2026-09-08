@@ -31,6 +31,7 @@ reference:
   - shoal_hdbscan
   - shoal_evoc
   - shoal_hclust
+  - shoal_slic
 - title: Distances
   desc: Pairwise distance matrices and nearest-neighbour search.
   contents:
@@ -41,6 +42,7 @@ reference:
   contents:
   - shoal_silhouette
   - shoal_metrics
+  - shoal_energy
 - title: Methods
   desc: Shared print and plot methods, and prediction for centroid models.
   contents:

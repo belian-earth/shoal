@@ -27,6 +27,8 @@ clusters of varying density and scores outliers.
 linkage methods, returning a standard \link[stats:hclust]{stats::hclust} object.
 \item \code{\link[=shoal_evoc]{shoal_evoc()}}: EVoC, direct multi-granularity clustering of embedding
 vectors, returning every cluster layer rather than one flat partition.
+\item \code{\link[=shoal_slic]{shoal_slic()}}: graph SLIC superpixels, compact feature-homogeneous
+patches over any point set with coordinates and a neighbour graph.
 }
 }
 
@@ -34,8 +36,13 @@ vectors, returning every cluster layer rather than one flat partition.
 \itemize{
 \item \code{\link[=shoal_dist]{shoal_dist()}}: pairwise distance matrices, returning a standard
 \link[stats:dist]{stats::dist} object.
+\item \code{\link[=shoal_knn]{shoal_knn()}}: exact k-nearest neighbours, also the neighbour graph
+\code{\link[=shoal_slic]{shoal_slic()}} runs on.
 \item \code{\link[=shoal_silhouette]{shoal_silhouette()}} and \code{\link[=shoal_metrics]{shoal_metrics()}}: validity measures for
 choosing the number of clusters.
+\item \code{\link[=shoal_energy]{shoal_energy()}} and \code{\link[=shoal_energy_self]{shoal_energy_self()}}: the two-sample energy
+distance between point clouds, for comparing distributions without
+clustering them.
 \item \code{\link[=shoal_palette]{shoal_palette()}}: the default cluster colours used by \code{plot()}.
 \item \code{\link[=shoal_threads]{shoal_threads()}}: the size of the thread pool the Rust backends use.
 }

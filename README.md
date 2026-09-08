@@ -14,14 +14,15 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 <!-- badges: end -->
 
 shoal is a fast, foundational toolkit for clustering in R, with Rust
-backends behind one consistent interface. Six clustering algorithms,
-from k-means to EVoC, take a numeric matrix or data frame and return one
-shared result class that prints and plots the same way, with noise
-points as `NA`. Alongside them are the building blocks clustering rests
-on: pairwise distance matrices and exact nearest-neighbour search under
-nine metrics, and the indices for choosing the number of clusters on
-evidence. Everything runs multithreaded, and every function matches or
-improves on the best R and Python alternatives.
+backends behind one consistent interface. Seven clustering algorithms,
+from k-means to EVoC and graph SLIC, take a numeric matrix or data frame
+and return one shared result class that prints and plots the same way,
+with noise points as `NA`. Alongside them are the building blocks
+clustering rests on: pairwise distance matrices and exact
+nearest-neighbour search under nine metrics, and the indices for
+choosing the number of clusters on evidence. Everything runs
+multithreaded, and every function matches or improves on the best R and
+Python alternatives.
 
 | Function | Algorithm | Backend | Reach for it when |
 |----|----|----|----|
@@ -31,12 +32,14 @@ improves on the best R and Python alternatives.
 | `shoal_hdbscan()` | HDBSCAN | petal-clustering | Clusters have arbitrary shape and varying density. |
 | `shoal_hclust()` | Agglomerative hierarchical | [kodama](https://github.com/diffeo/kodama) | You want a dendrogram and R’s `cutree()` ecosystem. |
 | `shoal_evoc()` | EVoC | In-tree port of [EVoC](https://github.com/TutteInstitute/evoc) | Rows are embedding vectors; you want every granularity at once. |
+| `shoal_slic()` | Graph SLIC superpixels | In-tree | Points have coordinates and a neighbour graph; you want compact, homogeneous patches at a chosen scale. |
 
 | Function | Does |
 |----|----|
 | `shoal_dist()` | Pairwise distances under nine metrics, returned as R’s own `dist` so `cmdscale()`, `cluster::pam()` and the rest work without glue. |
 | `shoal_knn()` | Exact k-nearest neighbours by kd-tree or parallel scan, same metrics, with a `plot()` that picks `eps` for DBSCAN. |
 | `shoal_silhouette()`, `shoal_metrics()` | Silhouette widths, Calinski-Harabasz and Davies-Bouldin, for choosing the number of clusters. |
+| `shoal_energy()`, `shoal_energy_self()` | Two-sample energy distance between point clouds of any dimension, reduced in parallel without a distance matrix; the self term alone, for reuse across comparisons. |
 
 ## Installation
 
