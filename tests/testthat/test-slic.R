@@ -166,6 +166,8 @@ test_that("early stopping and input validation behave", {
   expect_error(shoal_slic(cs$x, cs$xy, cs$nb[-1, ], cs$init, lambda = 1), "one row per point")
   bad <- cs$nb; bad[1, 1] <- 0L
   expect_error(shoal_slic(cs$x, cs$xy, bad, cs$init, lambda = 1), "outside")
+  expect_error(shoal_slic(cs$x, cs$xy, as.data.frame(cs$nb), cs$init, lambda = 1), "integer matrix")
+  expect_error(shoal_slic(cs$x, cs$xy, cs$nb + 0.5, cs$init, lambda = 1), "integer matrix")
   expect_error(shoal_slic(cs$x, cs$xy, cs$nb, cs$init[-1], lambda = 1), "length")
   expect_error(shoal_slic(cs$x, cs$xy, cs$nb, cs$init, adaptive = "mean"), "alpha")
   expect_error(shoal_slic(cs$x, cs$xy, cs$nb, cs$init, lambda = 1, tol = 1), "tol")
