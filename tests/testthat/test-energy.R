@@ -17,6 +17,26 @@ test_that("shoal_energy matches the R reference", {
   expect_equal(shoal_energy(x, y), ref$energy)
 })
 
+test_that("tiled products agree with the reference across tile boundaries", {
+  # Samples larger than one row tile of the Rust kernel, unit-norm as for
+  # embeddings compared by cosine, and far from the origin where the norm
+  # expansion cancels most.
+  set.seed(7)
+  unit <- function(n, d) {
+    m <- matrix(rnorm(n * d), n, d)
+    m / sqrt(rowSums(m^2))
+  }
+  x <- unit(300, 8)
+  y <- unit(250, 8)
+  ref <- reference_energy(x, y)
+  got <- shoal_energy(x, y, terms = TRUE)
+  expect_equal(got, ref, tolerance = 1e-9)
+  expect_equal(shoal_energy_self(y), ref$self_y, tolerance = 1e-9)
+  far <- matrix(rnorm(200 * 6, mean = 100), ncol = 6)
+  ref <- reference_energy(far, far + 0.5)
+  expect_equal(shoal_energy(far, far + 0.5, terms = TRUE), ref, tolerance = 1e-9)
+})
+
 test_that("energy is symmetric, zero-floored and orders shifted samples", {
   set.seed(4)
   x <- matrix(rnorm(50 * 3), ncol = 3)

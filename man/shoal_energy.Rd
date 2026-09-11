@@ -45,14 +45,18 @@ estimate or choice of bins, so it compares point clouds of any dimension
 directly: two embeddings of the same region in different years, a sample
 against a reference population, or a cluster against the rest.
 
-The three pairwise-distance blocks are reduced row by row in parallel in
-Rust and never held in memory, so the cost is about
-\verb{(2 n m + n^2 + m^2) d / 2} flops and the memory is the two inputs. When
-one sample is compared against many others its within-sample term is the
-same every time: \code{shoal_energy_self()} computes that term alone, and
-passing it as \code{self_x} or \code{self_y} skips recomputing it. For unit-normalised rows the
-Euclidean distance is a monotone function of cosine distance, so the
-statistic can be used on embeddings that are compared by cosine.
+Each pairwise-distance block is formed in tiles by a matrix product in
+Rust, since \verb{|a - b|^2 = |a|^2 + |b|^2 - 2 a.b} and the dot products
+\code{a.b} are one product of the two samples, and each tile is reduced to
+its sum as soon as it is formed. The cost is about
+\verb{(2 n m + n^2 + m^2) d / 2} flops at matrix-product speed and the memory
+is the two inputs plus one small tile per thread; the full distance
+matrix is never held. When one sample is compared against many others
+its within-sample term is the same every time: \code{shoal_energy_self()}
+computes that term alone, and passing it as \code{self_x} or \code{self_y} skips
+recomputing it. For unit-normalised rows the Euclidean distance is a
+monotone function of cosine distance, so the statistic can be used on
+embeddings that are compared by cosine.
 }
 \examples{
 x <- as.matrix(iris[iris$Species == "setosa", 1:4])
