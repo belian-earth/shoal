@@ -37,6 +37,19 @@ test_that("tiled products agree with the reference across tile boundaries", {
   expect_equal(shoal_energy(far, far + 0.5, terms = TRUE), ref, tolerance = 1e-9)
 })
 
+test_that("samples wider than one column tile take the multi-tile path", {
+  # The Rust kernel forms the product in tiles of 2048 columns; a second
+  # sample past that width exercises the tile boundary in the cross term
+  # and, through its self term, in the upper triangle too.
+  set.seed(8)
+  x <- matrix(rnorm(60 * 4), ncol = 4)
+  y <- matrix(rnorm(2100 * 4, mean = 0.2), ncol = 4)
+  ref <- reference_energy(x, y)
+  expect_equal(shoal_energy(x, y, terms = TRUE), ref, tolerance = 1e-9)
+  expect_equal(shoal_energy_self(y), ref$self_y, tolerance = 1e-9)
+  expect_equal(shoal_energy(y, x), ref$energy, tolerance = 1e-9)
+})
+
 test_that("energy is symmetric, zero-floored and orders shifted samples", {
   set.seed(4)
   x <- matrix(rnorm(50 * 3), ncol = 3)
