@@ -148,7 +148,7 @@ thousand.</p>
 <span><span class="co">#&gt;   2: 17 clusters, 674 noise, persistence 494.2</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> 3: 9 clusters, 230 noise, persistence 799.6</span></span>
 <span><span class="va">timing</span><span class="op">[[</span><span class="st">"elapsed"</span><span class="op">]</span><span class="op">]</span></span>
-<span><span class="co">#&gt; [1] 0.093</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.086</span></span></code></pre></div>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span>cluster <span class="op">=</span> <span class="va">ev</span><span class="op">$</span><span class="va">cluster</span>, group <span class="op">=</span> <span class="va">newsgroups</span><span class="op">$</span><span class="va">group</span>, useNA <span class="op">=</span> <span class="st">"ifany"</span><span class="op">)</span></span>
 <span><span class="co">#&gt;        group</span></span>
@@ -326,9 +326,9 @@ from you.</p>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;                   method clusters noise   ari seconds</span></span>
 <span><span class="co">#&gt; 1                   EVoC        9   230 0.747    0.09</span></span>
-<span><span class="co">#&gt; 2 HDBSCAN on the vectors        7  1651 0.097    2.50</span></span>
-<span><span class="co">#&gt; 3      UMAP then HDBSCAN       13   151 0.679    4.08</span></span>
-<span><span class="co">#&gt; 4         k-means, k = 8        8     0 0.780    0.12</span></span></code></pre></div>
+<span><span class="co">#&gt; 2 HDBSCAN on the vectors        7  1651 0.097    2.66</span></span>
+<span><span class="co">#&gt; 3      UMAP then HDBSCAN       13   151 0.679    3.68</span></span>
+<span><span class="co">#&gt; 4         k-means, k = 8        8     0 0.780    0.11</span></span></code></pre></div>
 <p>HDBSCAN on the raw vectors is the case EVoC exists to fix: in 64
 dimensions there is no density contrast to find, so most of the corpus
 is noise, and the spatial index is slow getting there. UMAP followed by
