@@ -71,5 +71,6 @@ fit$centroids
 
 }
 \seealso{
-\code{\link[=predict.shoal_kmeans]{predict.shoal_kmeans()}} for assigning new observations.
+\code{\link[=predict.shoal_kmeans]{predict.shoal_kmeans()}} for assigning new observations, and
+\code{\link[=shoal_emeans]{shoal_emeans()}} for many clusters on large data.
 }

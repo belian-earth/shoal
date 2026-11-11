@@ -2,12 +2,15 @@
 % Please edit documentation in R/kmeans.R
 \name{predict.shoal_kmeans}
 \alias{predict.shoal_kmeans}
+\alias{predict.shoal_emeans}
 \title{Assign New Observations to Fitted Clusters}
 \usage{
 \method{predict}{shoal_kmeans}(object, newdata = NULL, ...)
+
+\method{predict}{shoal_emeans}(object, newdata = NULL, ...)
 }
 \arguments{
-\item{object}{A fitted \code{\link[=shoal_kmeans]{shoal_kmeans()}} model.}
+\item{object}{A fitted \code{\link[=shoal_kmeans]{shoal_kmeans()}} or \code{\link[=shoal_emeans]{shoal_emeans()}} model.}
 
 \item{newdata}{A numeric matrix or data frame with the same columns as the
 data the model was fitted to. Omit it to return the training assignments.}
@@ -19,7 +22,9 @@ An integer vector of cluster IDs, one per row of \code{newdata}.
 }
 \description{
 Assigns each row of \code{newdata} to the nearest centroid by squared Euclidean
-distance.
+distance, or for a cosine \code{\link[=shoal_emeans]{shoal_emeans()}} model to the centroid of largest
+cosine similarity. For a \code{\link[=shoal_emeans]{shoal_emeans()}} model, predicting the training
+data on the machine that fitted it reproduces its \code{cluster} exactly.
 }
 \details{
 Only algorithms with a notion of a cluster centre can do this. The

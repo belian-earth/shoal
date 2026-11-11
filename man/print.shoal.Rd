@@ -7,6 +7,7 @@
 \alias{print.shoal_evoc}
 \alias{print.shoal_kmeans}
 \alias{print.shoal_gmm}
+\alias{print.shoal_emeans}
 \alias{print.shoal_slic}
 \title{Print a clustering result}
 \usage{
@@ -19,6 +20,8 @@
 \method{print}{shoal_kmeans}(x, ...)
 
 \method{print}{shoal_gmm}(x, ...)
+
+\method{print}{shoal_emeans}(x, ...)
 
 \method{print}{shoal_slic}(x, ...)
 }

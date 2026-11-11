@@ -16,6 +16,9 @@ cluster vector wherever an algorithm has them.
 \itemize{
 \item \code{\link[=shoal_kmeans]{shoal_kmeans()}}: k-means, partitioning into a fixed number of compact
 clusters, with \code{predict()} for new observations.
+\item \code{\link[=shoal_emeans]{shoal_emeans()}}: e-means, k-means fitted by mini-batch moving averages
+for many clusters on large data, with a cosine mode for embedding
+vectors.
 \item \code{\link[=shoal_gmm]{shoal_gmm()}}: Gaussian mixtures, soft probabilistic assignment with
 elliptical clusters, and \code{logLik()} so \code{AIC()} and \code{BIC()} can choose the
 component count.
@@ -91,6 +94,16 @@ Useful links:
 Authors:
 \itemize{
   \item First Last \email{first.last@example.com}
+}
+
+Other contributors:
+\itemize{
+  \item Gergely Szilvasy (e-means reference implementation) [contributor]
+  \item Swann Bessa (e-means reference implementation) [contributor]
+  \item Matthijs Douze (e-means reference implementation) [contributor]
+  \item Meta Platforms, Inc. and affiliates (e-means reference implementation) [copyright holder]
+  \item Leland McInnes (EVoC reference implementation) [contributor]
+  \item Tutte Institute for Mathematics and Computing (EVoC reference implementation) [copyright holder]
 }
 
 }

@@ -71,6 +71,16 @@ check_positive_number <- function(x, arg = rlang::caller_arg(x), call = rlang::c
   invisible(x)
 }
 
+check_non_negative_number <- function(x, arg = rlang::caller_arg(x), call = rlang::caller_env()) {
+  if (!rlang::is_scalar_double(x) && !rlang::is_scalar_integer(x)) {
+    cli::cli_abort("{.arg {arg}} must be a single number.", call = call)
+  }
+  if (is.na(x) || !is.finite(x) || x < 0) {
+    cli::cli_abort("{.arg {arg}} must be a non-negative, finite number.", call = call)
+  }
+  invisible(x)
+}
+
 check_positive_integer <- function(x, arg = rlang::caller_arg(x), call = rlang::caller_env()) {
   if (!rlang::is_scalar_integerish(x)) {
     cli::cli_abort("{.arg {arg}} must be a single integer.", call = call)

@@ -5,6 +5,10 @@ use petal_neighbors::distance::{Cosine, Euclidean};
 
 mod convert;
 mod dist;
+mod emeans;
+#[cfg(test)]
+#[rustfmt::skip]
+mod emeans_fixtures;
 mod energy;
 mod evoc;
 mod gmm;
@@ -294,6 +298,89 @@ fn rust_nearest_centroid(x: RMatrix<f64>, centroids: RMatrix<f64>) -> Integers {
         .collect()
 }
 
+// e-means: mini-batch k-means by exponential moving averages.
+//
+// Settings left to the recipe arrive as sentinels: `batch_size` 0, and
+// `alpha0` or `revive` NaN. In cosine mode, rows with no direction (all
+// zero) are counted before anything else runs; when there are any, the list
+// carries only that count, for the R side to report. `finite` is false when
+// the distances overflowed, and `batch_law` is empty when the batch size
+// was given.
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rust_emeans(
+    x: RMatrix<f64>,
+    k: i32,
+    epochs: f64,
+    batch_law: &str,
+    batch_size: i32,
+    alpha0: f64,
+    revive: f64,
+    cosine: bool,
+    seed: f64,
+) -> List {
+    let d = x.ncols();
+    let data = row_major(&x);
+    if cosine {
+        let zero = threads::pool().install(|| emeans::count_zero_rows(&data, d));
+        if zero > 0 {
+            return list!(zero_rows = zero as f64);
+        }
+    }
+    let params = emeans::Params {
+        k: k as usize,
+        epochs,
+        law: emeans::BatchLaw::from_name(batch_law),
+        batch_size: (batch_size > 0).then_some(batch_size as usize),
+        alpha0: (!alpha0.is_nan()).then_some(alpha0),
+        revive: (!revive.is_nan()).then_some(revive),
+        cosine,
+        seed: seed as u64,
+    };
+    let fit = threads::pool().install(|| emeans::fit(data, d, &params));
+
+    let k = params.k;
+    let cluster: Vec<i32> = fit.labels.iter().map(|&j| j as i32 + 1).collect();
+    let centroids = RMatrix::new_matrix(k, d, |r, c| fit.centroids[r * d + c]);
+    let epoch_rows: Vec<f64> = fit.recipe.epoch_rows.iter().map(|&r| r as f64).collect();
+    list!(
+        zero_rows = 0.0,
+        finite = fit.finite,
+        cluster = cluster,
+        centroids = centroids,
+        inertia = fit.inertia,
+        sizes = fit.sizes,
+        epoch_objective = fit.epoch_objective,
+        n_splits = fit.n_splits as f64,
+        batch_law = fit.recipe.law.map_or("", |l| l.name()),
+        batch_size = fit.recipe.batch_size as f64,
+        alpha0 = fit.recipe.alpha0,
+        epoch_rows = epoch_rows,
+        total_steps = fit.recipe.total_steps as f64,
+        revive = fit.recipe.revive
+    )
+}
+
+// Nearest e-means centroid of each row, normalising rows first in cosine
+// mode. Backs `predict()`; matches the fit's own final assignment row for
+// row. As in `rust_emeans`, zero rows in cosine mode are reported, not
+// assigned, and `finite` flags overflowed distances.
+#[extendr]
+fn rust_emeans_assign(x: RMatrix<f64>, centroids: RMatrix<f64>, cosine: bool) -> List {
+    let d = x.ncols();
+    let data = row_major(&x);
+    let c = row_major(&centroids);
+    if cosine {
+        let zero = threads::pool().install(|| emeans::count_zero_rows(&data, d));
+        if zero > 0 {
+            return list!(zero_rows = zero as f64);
+        }
+    }
+    let (labels, finite) = threads::pool().install(|| emeans::assign(data, d, &c, cosine));
+    let cluster: Vec<i32> = labels.iter().map(|&j| j as i32 + 1).collect();
+    list!(zero_rows = 0.0, finite = finite, cluster = cluster)
+}
+
 // Gaussian mixture model.
 //
 // Returns only the fitted parameters; responsibilities, assignments and the
@@ -538,6 +625,8 @@ extendr_module! {
     fn rust_hclust_data;
     fn rust_kmeans;
     fn rust_nearest_centroid;
+    fn rust_emeans;
+    fn rust_emeans_assign;
     fn rust_gmm;
     fn rust_evoc;
     fn rust_silhouette;

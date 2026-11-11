@@ -1,4 +1,4 @@
-.PHONY: all install document test bench bench-r bench-sklearn compare \
+.PHONY: all install document test bench bench-r bench-sklearn bench-emeans compare \
        gen-data clean-data clean-bench clean
 
 ROOT := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))..
@@ -29,6 +29,10 @@ bench-sklearn: gen-data
 
 bench: bench-r bench-sklearn
 
+# Separate from the scaling benchmark: 500,000 rows, scored for loss as well.
+bench-emeans: install
+	cd $(ROOT) && Rscript bench/bench_emeans.R && uv run bench/bench_emeans.py
+
 compare: bench
 	cd $(ROOT) && Rscript bench/compare.R
 
@@ -38,6 +42,7 @@ clean-data:
 	rm -rf $(ROOT)/bench/data
 
 clean-bench: clean-data
-	rm -f $(ROOT)/bench/results_r.csv $(ROOT)/bench/results_sklearn.csv $(ROOT)/bench/scaling.png
+	rm -f $(ROOT)/bench/results_r.csv $(ROOT)/bench/results_sklearn.csv $(ROOT)/bench/scaling.png \
+	  $(ROOT)/bench/results_emeans_r.csv $(ROOT)/bench/results_emeans.csv
 
 clean: clean-bench

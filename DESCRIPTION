@@ -1,18 +1,35 @@
 Package: shoal
 Title: High-Performance Clustering via Rust
 Version: 0.0.0.1
-Authors@R:
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
+Authors@R: c(
+    person("First", "Last", , "first.last@example.com", role = c("aut", "cre")),
+    person("Gergely", "Szilvasy", role = "ctb",
+           comment = "e-means reference implementation"),
+    person("Swann", "Bessa", role = "ctb",
+           comment = "e-means reference implementation"),
+    person("Matthijs", "Douze", role = "ctb",
+           comment = "e-means reference implementation"),
+    person("Meta Platforms, Inc. and affiliates", role = "cph",
+           comment = "e-means reference implementation"),
+    person("Leland", "McInnes", role = "ctb",
+           comment = "EVoC reference implementation"),
+    person("Tutte Institute for Mathematics and Computing", role = "cph",
+           comment = "EVoC reference implementation")
+  )
 Description: A small, foundational set of clustering algorithms with Rust
     backends, presented behind one consistent interface: k-means and Gaussian
-    mixtures via 'linfa', the density-based methods DBSCAN and HDBSCAN via
-    'petal-clustering', agglomerative hierarchical clustering via 'kodama',
+    mixtures via 'linfa'; e-means, mini-batch k-means for many clusters on
+    large data, via an in-tree port of the reference implementation in
+    'faiss'; the density-based methods DBSCAN and HDBSCAN via
+    'petal-clustering'; agglomerative hierarchical clustering via 'kodama';
     EVoC, direct multi-granularity clustering of embedding vectors, via an
-    in-tree port of the reference implementation, and graph SLIC superpixels
-    over any point set with a neighbour graph. All algorithms return
-    objects sharing a common class, so printing and plotting behave
-    identically whichever algorithm produced the result.
+    in-tree port of the reference implementation; and graph SLIC superpixels
+    over any point set with a neighbour graph. All algorithms return objects
+    sharing a common class, so printing and plotting behave identically
+    whichever algorithm produced the result.
 License: Apache License (>= 2)
+Copyright: See inst/COPYRIGHTS for the code ported from 'faiss' (e-means)
+    and EVoC, and their licences.
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Config/rextendr/version: 0.5.0

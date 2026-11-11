@@ -26,6 +26,7 @@ reference:
   desc: Clustering algorithms.
   contents:
   - shoal_kmeans
+  - shoal_emeans
   - shoal_gmm
   - shoal_dbscan
   - shoal_hdbscan
