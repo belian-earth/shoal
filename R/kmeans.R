@@ -12,7 +12,7 @@
 #'
 #' k-means is stochastic in its initialisation, so `seed` is a parameter rather
 #' than being taken from R's RNG. The same `seed` and parameters always give the
-#' same partition; `set.seed()` has no effect on it.
+#' same partition, whatever the thread count; `set.seed()` has no effect on it.
 #'
 #' # Choosing k
 #'
@@ -25,9 +25,13 @@
 #'   using their numeric columns (non-numeric columns are dropped).
 #' @param k Number of clusters. Required, since there is no sensible default for
 #'   the central modelling decision. Must be at least 1 and no more than `nrow(x)`.
-#' @param init Initialisation method. `"kmeans++"` (default) is the usual
-#'   choice; `"kmeans_parallel"` scales better past roughly 100 clusters;
-#'   `"random"` is the naive baseline.
+#' @param init Initialisation method. `"kmeans++"` (default) draws each centre
+#'   in turn, with probability proportional to its squared distance from the
+#'   nearest centre so far, and takes the time of a few Lloyd iterations.
+#'   `"kmeans_parallel"` is k-means||, which draws candidates in eight rounds
+#'   and reduces them to `k` by k-means++; it takes up to four times as long as
+#'   `"kmeans++"` and reaches a similar loss. `"random"` starts from `k` random
+#'   rows.
 #' @param n_runs Number of restarts, keeping the fit with the lowest inertia.
 #'   Default `10L`.
 #' @param max_iter Maximum iterations per run. Default `300L`.

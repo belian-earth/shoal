@@ -14,8 +14,7 @@
 # faiss start. Lloyd-type methods run at most 25 iterations, the default of
 # faiss's k-means; mini-batch methods run 5 passes with the batch size e-means
 # chose. Runs over 30 s are timed once, faster ones take the median of three.
-# The k-means++ start of shoal_kmeans() is timed separately: its cost grows
-# with the square of k, and at k = 1024 it alone would take minutes.
+# shoal_kmeans() is also timed from its default k-means++ start.
 
 library(shoal)
 
@@ -101,10 +100,8 @@ for (k in ks) {
 
   km <- time_fit(function() shoal_kmeans(x, k, init = "random", n_runs = 1L, max_iter = lloyd_iters))
   record(k, "Lloyd", "shoal", threads, km, km$fit$centroids)
-  if (k <= 256L) {
-    pp <- time_fit(function() shoal_kmeans(x, k, n_runs = 1L, max_iter = lloyd_iters))
-    record(k, "Lloyd, k-means++ start", "shoal", threads, pp, pp$fit$centroids)
-  }
+  pp <- time_fit(function() shoal_kmeans(x, k, n_runs = 1L, max_iter = lloyd_iters))
+  record(k, "Lloyd, k-means++ start", "shoal", threads, pp, pp$fit$centroids)
 
   # Single-threaded, and seeded through R's RNG. At this size it stops after
   # a few iterations, with the warning that its quick-transfer stage

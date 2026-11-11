@@ -19,6 +19,8 @@ test_that("results do not depend on the thread count", {
   set.seed(1)
   emb <- matrix(runif(4 * 32, -1, 1) * 0.6, nrow = 4)[rep(1:4, each = 60L), ] +
     matrix(rnorm(240 * 32, sd = 0.1), ncol = 32)
+  # Enough rows for several of the k-means|| sampling blocks of 4096.
+  wide <- matrix(rnorm(12000 * 3), ncol = 3)
 
   run <- function() list(
     dist = shoal_dist(x),
@@ -26,6 +28,8 @@ test_that("results do not depend on the thread count", {
     hdbscan = shoal_hdbscan(x)$cluster,
     evoc = shoal_evoc(emb, min_cluster_size = 15L)$layers,
     kmeans = shoal_kmeans(x, k = 3L)[c("cluster", "centroids", "inertia")],
+    kmeans_par = shoal_kmeans(wide, k = 20L, init = "kmeans_parallel", n_runs = 2L,
+                              max_iter = 5L)[c("cluster", "centroids", "inertia")],
     # A batch of several assignment tiles, so training runs in parallel too.
     emeans = shoal_emeans(emb, k = 8L, batch_size = 256L)[c("cluster", "centroids", "inertia", "epoch_objective")],
     emeans_cos = shoal_emeans(emb, k = 8L, metric = "cosine")[c("cluster", "centroids", "inertia")],

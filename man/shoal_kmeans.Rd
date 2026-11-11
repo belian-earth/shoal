@@ -21,9 +21,13 @@ using their numeric columns (non-numeric columns are dropped).}
 \item{k}{Number of clusters. Required, since there is no sensible default for
 the central modelling decision. Must be at least 1 and no more than \code{nrow(x)}.}
 
-\item{init}{Initialisation method. \code{"kmeans++"} (default) is the usual
-choice; \code{"kmeans_parallel"} scales better past roughly 100 clusters;
-\code{"random"} is the naive baseline.}
+\item{init}{Initialisation method. \code{"kmeans++"} (default) draws each centre
+in turn, with probability proportional to its squared distance from the
+nearest centre so far, and takes the time of a few Lloyd iterations.
+\code{"kmeans_parallel"} is k-means||, which draws candidates in eight rounds
+and reduces them to \code{k} by k-means++; it takes up to four times as long as
+\code{"kmeans++"} and reaches a similar loss. \code{"random"} starts from \code{k} random
+rows.}
 
 \item{n_runs}{Number of restarts, keeping the fit with the lowest inertia.
 Default \code{10L}.}
@@ -54,7 +58,7 @@ predictive: \code{\link[=predict]{predict()}} assigns new observations to the fi
 \section{Reproducibility}{
 k-means is stochastic in its initialisation, so \code{seed} is a parameter rather
 than being taken from R's RNG. The same \code{seed} and parameters always give the
-same partition; \code{set.seed()} has no effect on it.
+same partition, whatever the thread count; \code{set.seed()} has no effect on it.
 }
 
 \section{Choosing k}{

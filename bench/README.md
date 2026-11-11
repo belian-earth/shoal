@@ -95,12 +95,15 @@ the batch size e-means chose, and e-means runs its default five passes.
   reference. At k = 256 shoal's mean is 0.4 points lower, -1.06% against
   -0.62%, a gap similar to the spread of the reference's seeds. Over 80
   seeds on AlphaEarth embeddings their mean losses agreed to 0.01%.
-- `shoal_kmeans()` defaults to a k-means++ start, which here costs more than
-  the iterations: 57 s in all at k = 256, against 8.9 s from random rows,
-  for a loss 0.9 points lower. Its cost grows with the square of k, because
-  linfa recomputes each row's distance to every centre chosen so far, and at
-  k = 1024 it had not finished after nine minutes. The table therefore uses
-  random starts throughout.
+- The table compares the methods from the same random start. From its
+  default k-means++ start, `shoal_kmeans()` takes 10.4 s at k = 256 and
+  43.8 s at k = 1024, for losses of -0.16% and -4.31%. At k = 1024 that is
+  the lowest loss here, 2.7 points below e-means, at 20 times its time. On
+  AlphaEarth embeddings the gap closes: five passes of e-means matched a
+  converged k-means++ fit to within 0.07%. The start itself takes 1.5 s at
+  k = 256 and 5.6 s at k = 1024. Before linfa's quadratic start was
+  replaced (#11), it took 48 s at k = 256 and had not finished after nine
+  minutes at k = 1024.
 - Base R's Hartigan-Wong stops after one to seven iterations at this size,
   warning that its quick-transfer stage exceeded its step limit, so its row
   measures an aborted fit. ClusterR's mini-batch k-means is single-threaded.
