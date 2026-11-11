@@ -1,7 +1,7 @@
 # shoal
 
 shoal is a fast, foundational toolkit for clustering in R, with Rust
-backends behind one consistent interface. Seven clustering algorithms,
+backends behind one consistent interface. Eight clustering algorithms,
 from k-means to EVoC and graph SLIC, take a numeric matrix or data frame
 and return one shared result class that prints and plots the same way,
 with noise points as `NA`. Alongside them are the building blocks
@@ -14,6 +14,7 @@ Python alternatives.
 | Function | Algorithm | Backend | Reach for it when |
 |----|----|----|----|
 | [`shoal_kmeans()`](https://belian-earth.github.io/shoal/reference/shoal_kmeans.md) | k-means | [linfa](https://github.com/rust-ml/linfa) | Clusters are roughly spherical and you know how many to expect. |
+| [`shoal_emeans()`](https://belian-earth.github.io/shoal/reference/shoal_emeans.md) | e-means (mini-batch k-means) | In-tree port of [e-means](https://github.com/facebookresearch/faiss/tree/main/contrib/e_means) | You need many clusters on large data, such as a codebook or a fine partition of embeddings; `metric = "cosine"` clusters directions. |
 | [`shoal_gmm()`](https://belian-earth.github.io/shoal/reference/shoal_gmm.md) | Gaussian mixture | linfa | Clusters are elliptical, or you want soft memberships and [`BIC()`](https://rdrr.io/r/stats/AIC.html). |
 | [`shoal_dbscan()`](https://belian-earth.github.io/shoal/reference/shoal_dbscan.md) | DBSCAN | [petal-clustering](https://github.com/petabi/petal-clustering) | Clusters have arbitrary shape and a common density. |
 | [`shoal_hdbscan()`](https://belian-earth.github.io/shoal/reference/shoal_hdbscan.md) | HDBSCAN | petal-clustering | Clusters have arbitrary shape and varying density. |
@@ -122,6 +123,14 @@ with the size and dimension of the data. The results, the scaling figure
 and the scripts that produce them are in
 [`bench/README.md`](https://github.com/belian-earth/shoal/blob/main/bench/README.md).
 
+e-means has a benchmark of its own, at 500,000 rows and up to 1024
+clusters, scored for loss as well as time. There
+[`shoal_emeans()`](https://belian-earth.github.io/shoal/reference/shoal_emeans.md)
+is 1.6 to 2.6 times faster than the reference implementation and 3.7 to
+4.8 times faster than the fastest Lloyd’s k-means, at a lower loss.
+These comparisons are on CPU only. GPU implementations, the reference’s
+own included, have not been compared.
+
 The Rust backends run their parallel stages on a thread pool owned by
 the package, which by default uses every logical core.
 `shoal_threads(n)` resizes it for the session;
@@ -141,10 +150,19 @@ to [petal-clustering](https://github.com/petabi/petal-clustering) by
 [Petabi](https://github.com/petabi); hierarchical clustering to
 [kodama](https://github.com/diffeo/kodama), a Rust port of
 *fastcluster*; k-means and Gaussian mixtures to
-[linfa](https://github.com/rust-ml/linfa); and EVoC to a Rust port of
-the [reference implementation](https://github.com/TutteInstitute/evoc)
-by Leland McInnes and the Tutte Institute, validated against fixtures
-generated from it. shoal is an R interface to their work.
+[linfa](https://github.com/rust-ml/linfa); EVoC to a Rust port of the
+[reference implementation](https://github.com/TutteInstitute/evoc) by
+Leland McInnes and the Tutte Institute; and e-means to a Rust port of
+the [reference
+implementation](https://github.com/facebookresearch/faiss/tree/main/contrib/e_means)
+in faiss by Gergely Szilvasy, Swann Bessa and Matthijs Douze at Meta
+FAIR. Both ports are validated against fixtures generated from their
+reference implementations, and their licence notices are in
+[`inst/COPYRIGHTS`](https://github.com/belian-earth/shoal/blob/main/inst/COPYRIGHTS).
+The e-means authors ask that work using it cite their paper: Bessa et
+al. (2026), [*e-means: outperforming k-means (in one-tenth the
+epochs)*](https://arxiv.org/abs/2611.09501). shoal is an R interface to
+their work.
 
 # Package index
 
@@ -154,6 +172,8 @@ Clustering algorithms.
 
 - [`shoal_kmeans()`](https://belian-earth.github.io/shoal/reference/shoal_kmeans.md)
   : K-Means Clustering
+- [`shoal_emeans()`](https://belian-earth.github.io/shoal/reference/shoal_emeans.md)
+  : e-means Clustering
 - [`shoal_gmm()`](https://belian-earth.github.io/shoal/reference/shoal_gmm.md)
   : Gaussian Mixture Model
 - [`shoal_dbscan()`](https://belian-earth.github.io/shoal/reference/shoal_dbscan.md)
@@ -203,9 +223,11 @@ Shared print and plot methods, and prediction for centroid models.
   [`print(`*`<shoal_evoc>`*`)`](https://belian-earth.github.io/shoal/reference/print.shoal.md)
   [`print(`*`<shoal_kmeans>`*`)`](https://belian-earth.github.io/shoal/reference/print.shoal.md)
   [`print(`*`<shoal_gmm>`*`)`](https://belian-earth.github.io/shoal/reference/print.shoal.md)
+  [`print(`*`<shoal_emeans>`*`)`](https://belian-earth.github.io/shoal/reference/print.shoal.md)
   [`print(`*`<shoal_slic>`*`)`](https://belian-earth.github.io/shoal/reference/print.shoal.md)
   : Print a clustering result
 - [`predict(`*`<shoal_kmeans>`*`)`](https://belian-earth.github.io/shoal/reference/predict.shoal_kmeans.md)
+  [`predict(`*`<shoal_emeans>`*`)`](https://belian-earth.github.io/shoal/reference/predict.shoal_kmeans.md)
   : Assign New Observations to Fitted Clusters
 - [`predict(`*`<shoal_gmm>`*`)`](https://belian-earth.github.io/shoal/reference/predict.shoal_gmm.md)
   : Predict Mixture Membership

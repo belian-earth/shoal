@@ -4,6 +4,24 @@
 
 - **First Last**. Author, maintainer.
 
+- **Gergely Szilvasy**. Contributor.  
+  e-means reference implementation
+
+- **Swann Bessa**. Contributor.  
+  e-means reference implementation
+
+- **Matthijs Douze**. Contributor.  
+  e-means reference implementation
+
+- **Meta Platforms, Inc. and affiliates**. Copyright holder.  
+  e-means reference implementation
+
+- **Leland McInnes**. Contributor.  
+  EVoC reference implementation
+
+- **Tutte Institute for Mathematics and Computing**. Copyright holder.  
+  EVoC reference implementation
+
 ## Citation
 
 Source:

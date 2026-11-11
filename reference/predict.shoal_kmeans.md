@@ -1,12 +1,20 @@
 # Assign New Observations to Fitted Clusters
 
 Assigns each row of `newdata` to the nearest centroid by squared
-Euclidean distance.
+Euclidean distance, or for a cosine
+[`shoal_emeans()`](https://belian-earth.github.io/shoal/reference/shoal_emeans.md)
+model to the centroid of largest cosine similarity. For a
+[`shoal_emeans()`](https://belian-earth.github.io/shoal/reference/shoal_emeans.md)
+model, predicting the training data on the machine that fitted it
+reproduces its `cluster` exactly.
 
 ## Usage
 
 ``` r
 # S3 method for class 'shoal_kmeans'
+predict(object, newdata = NULL, ...)
+
+# S3 method for class 'shoal_emeans'
 predict(object, newdata = NULL, ...)
 ```
 
@@ -16,6 +24,8 @@ predict(object, newdata = NULL, ...)
 
   A fitted
   [`shoal_kmeans()`](https://belian-earth.github.io/shoal/reference/shoal_kmeans.md)
+  or
+  [`shoal_emeans()`](https://belian-earth.github.io/shoal/reference/shoal_emeans.md)
   model.
 
 - newdata:

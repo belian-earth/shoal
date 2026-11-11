@@ -15,6 +15,10 @@ cluster vector wherever an algorithm has them.
   [`predict()`](https://rdrr.io/r/stats/predict.html) for new
   observations.
 
+- [`shoal_emeans()`](https://belian-earth.github.io/shoal/reference/shoal_emeans.md):
+  e-means, k-means fitted by mini-batch moving averages for many
+  clusters on large data, with a cosine mode for embedding vectors.
+
 - [`shoal_gmm()`](https://belian-earth.github.io/shoal/reference/shoal_gmm.md):
   Gaussian mixtures, soft probabilistic assignment with elliptical
   clusters, and [`logLik()`](https://rdrr.io/r/stats/logLik.html) so
@@ -127,3 +131,19 @@ Useful links:
 Authors:
 
 - First Last <first.last@example.com>
+
+Other contributors:
+
+- Gergely Szilvasy (e-means reference implementation) \[contributor\]
+
+- Swann Bessa (e-means reference implementation) \[contributor\]
+
+- Matthijs Douze (e-means reference implementation) \[contributor\]
+
+- Meta Platforms, Inc. and affiliates (e-means reference implementation)
+  \[copyright holder\]
+
+- Leland McInnes (EVoC reference implementation) \[contributor\]
+
+- Tutte Institute for Mathematics and Computing (EVoC reference
+  implementation) \[copyright holder\]

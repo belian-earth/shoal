@@ -117,13 +117,13 @@ extra copy of `x`, its rows reordered so that each leaf is contiguous in
 memory.
 
 The conventions follow
-[`dbscan::kNN()`](https://rdrr.io/pkg/dbscan/man/kNN.html), so code
-written for its results works on these. Without `query`, each row is
-excluded from its own neighbours. With `query`, every row of `x` is a
-candidate, so a query identical to a data row finds that row at distance
-zero. Neighbours are sorted by distance, and equal distances by row
-index, so the result is fully determined by the input. Rows with missing
-or non-finite values are an error rather than being dropped as
+[`dbscan::kNN()`](https://michael.hahsler.net/dbscan/reference/kNN.html),
+so code written for its results works on these. Without `query`, each
+row is excluded from its own neighbours. With `query`, every row of `x`
+is a candidate, so a query identical to a data row finds that row at
+distance zero. Neighbours are sorted by distance, and equal distances by
+row index, so the result is fully determined by the input. Rows with
+missing or non-finite values are an error rather than being dropped as
 [`shoal_dist()`](https://belian-earth.github.io/shoal/reference/shoal_dist.md)
 does: dropping rows would renumber the indices so they no longer point
 into the caller's matrix.

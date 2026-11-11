@@ -1,15 +1,18 @@
 # Get started with shoal
 
-shoal provides six clustering algorithms behind one interface. Each
+shoal provides eight clustering algorithms behind one interface. Each
 takes a numeric matrix or data frame, returns an object with the shared
 `shoal_clustering` class, and prints and plots the same way. Noise
 points, where an algorithm has them, are `NA` in the `cluster` vector.
 
-This vignette introduces each algorithm in turn: what it assumes, the
-parameters that matter, and what its clusters look like on data chosen
-to show its character. It then turns to the tools around them: the
-distance matrix and nearest-neighbour search the algorithms rest on, and
-the indices for choosing the number of clusters.
+This vignette introduces the clustering algorithms in turn: what each
+assumes, the parameters that matter, and what its clusters look like on
+data chosen to show its character. Graph SLIC, which needs coordinates
+and a neighbour graph, is covered in
+[`?shoal_slic`](https://belian-earth.github.io/shoal/reference/shoal_slic.md).
+The vignette then turns to the tools around them: the distance matrix
+and nearest-neighbour search the algorithms rest on, and the indices for
+choosing the number of clusters.
 
 ``` r
 
@@ -91,6 +94,51 @@ Because it has cluster centres, it can assign new observations.
 predict(km, x[c(1, 51, 101), ])
 #> [1] 1 3 2
 ```
+
+## e-means: `shoal_emeans()`
+
+k-means for many clusters on large data. Instead of recomputing every
+centroid from all the data at each iteration, e-means updates the
+centroids from random mini-batches by a moving average, at a batch size
+and step its authors fitted to the size of the problem. With many rows
+and hundreds of clusters or more, it reaches the loss of a converged
+k-means in a handful of passes over the data.
+
+``` r
+
+set.seed(1)
+centres <- matrix(rnorm(300 * 16, sd = 3), ncol = 16)
+big <- centres[sample.int(300, 1e5, replace = TRUE), ] +
+  matrix(rnorm(1e5 * 16), ncol = 16)
+em <- shoal_emeans(big, k = 256L)
+em
+#> 
+#> ── e-means Clustering
+#> Metric: "euclidean"
+#> Parameters: k = 256, epochs = 5, batch_law = auto, seed = 1
+#> Clusters: 256, Noise points: 0
+#> Within-cluster sum of squares: 2712700
+#> Cluster sizes: min 132, median 334, max 1293
+#> Training: 5 epochs, 490 updates of 1024 rows (quality batch law), initial step
+#> 0.155, 31 revivals
+```
+
+`epochs` sets the budget, five passes by default, and the plan it
+implies is in `em$recipe`. `metric = "cosine"` is spherical k-means:
+rows are scaled to unit length and the centroids are mean directions,
+the geometry of embedding vectors compared by cosine similarity.
+
+``` r
+
+em_cos <- shoal_emeans(big, k = 256L, metric = "cosine")
+range(sqrt(rowSums(em_cos$centroids^2)))
+#> [1] 1 1
+```
+
+On small data with few clusters,
+[`shoal_kmeans()`](https://belian-earth.github.io/shoal/reference/shoal_kmeans.md)
+is the better choice. Its restarts guard against the poor local minima a
+single random start can settle in, and e-means makes one.
 
 ## Gaussian mixture: `shoal_gmm()`
 
@@ -460,6 +508,7 @@ and leaves the decision to you.
 | You have | Start with |
 |----|----|
 | Compact clusters, a known `k` | [`shoal_kmeans()`](https://belian-earth.github.io/shoal/reference/shoal_kmeans.md) |
+| Many clusters on large data, or embedding directions | [`shoal_emeans()`](https://belian-earth.github.io/shoal/reference/shoal_emeans.md) |
 | Elliptical clusters, or you want probabilities | [`shoal_gmm()`](https://belian-earth.github.io/shoal/reference/shoal_gmm.md) |
 | Arbitrary shapes at one density | [`shoal_dbscan()`](https://belian-earth.github.io/shoal/reference/shoal_dbscan.md) |
 | Arbitrary shapes at varying density | [`shoal_hdbscan()`](https://belian-earth.github.io/shoal/reference/shoal_hdbscan.md) |

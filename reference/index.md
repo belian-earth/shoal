@@ -6,6 +6,8 @@ Clustering algorithms.
 
 - [`shoal_kmeans()`](https://belian-earth.github.io/shoal/reference/shoal_kmeans.md)
   : K-Means Clustering
+- [`shoal_emeans()`](https://belian-earth.github.io/shoal/reference/shoal_emeans.md)
+  : e-means Clustering
 - [`shoal_gmm()`](https://belian-earth.github.io/shoal/reference/shoal_gmm.md)
   : Gaussian Mixture Model
 - [`shoal_dbscan()`](https://belian-earth.github.io/shoal/reference/shoal_dbscan.md)
@@ -55,9 +57,11 @@ Shared print and plot methods, and prediction for centroid models.
   [`print(`*`<shoal_evoc>`*`)`](https://belian-earth.github.io/shoal/reference/print.shoal.md)
   [`print(`*`<shoal_kmeans>`*`)`](https://belian-earth.github.io/shoal/reference/print.shoal.md)
   [`print(`*`<shoal_gmm>`*`)`](https://belian-earth.github.io/shoal/reference/print.shoal.md)
+  [`print(`*`<shoal_emeans>`*`)`](https://belian-earth.github.io/shoal/reference/print.shoal.md)
   [`print(`*`<shoal_slic>`*`)`](https://belian-earth.github.io/shoal/reference/print.shoal.md)
   : Print a clustering result
 - [`predict(`*`<shoal_kmeans>`*`)`](https://belian-earth.github.io/shoal/reference/predict.shoal_kmeans.md)
+  [`predict(`*`<shoal_emeans>`*`)`](https://belian-earth.github.io/shoal/reference/predict.shoal_kmeans.md)
   : Assign New Observations to Fitted Clusters
 - [`predict(`*`<shoal_gmm>`*`)`](https://belian-earth.github.io/shoal/reference/predict.shoal_gmm.md)
   : Predict Mixture Membership
