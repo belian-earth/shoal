@@ -57,6 +57,66 @@ At 50,000 points unless noted.
 - For high-dimensional embedding vectors, `shoal_evoc()` is the right tool
   and is orders of magnitude faster than HDBSCAN on the raw vectors.
 
+## e-means at scale
+
+The scaling benchmark above stops at five clusters and 50,000 rows, below
+the scale e-means is for. `bench_emeans.R` and `bench_emeans.py` cluster
+500,000 rows of embedding-like data, unit vectors in 64 dimensions around
+2,000 topic directions, into 256 and 1024 clusters. Speed alone would favour
+a method that stops early, so one evaluator scores every method's centroids
+on 50,000 held-out rows: the mean squared distance to the nearest centroid,
+relative to a converged Lloyd run of 100 iterations in faiss. A negative
+value is a lower loss than the converged run.
+
+Every method starts once from k random rows. Lloyd-type methods run at most
+25 iterations, the faiss default. The mini-batch methods run five passes at
+the batch size e-means chose, and e-means runs its default five passes.
+
+| Method | Package | Threads | k = 256 | Loss | k = 1024 | Loss |
+|----|----|--:|--:|--:|--:|--:|
+| e-means | shoal | 20 | 0.8 s | -0.86% | 2.2 s | -1.60% |
+| e-means | faiss (reference) | 12 | 2.0 s | -0.22% | 3.6 s | -1.48% |
+| mini-batch | scikit-learn | 20 | 1.8 s | +2.04% | 4.4 s | +1.35% |
+| Lloyd | scikit-learn | 20 | 2.9 s | +0.13% | 10.5 s | +1.24% |
+| Lloyd | faiss | 12 | 3.1 s | +0.42% | 11.1 s | +0.01% |
+| Lloyd | shoal | 20 | 8.9 s | +0.71% | 38.7 s | +1.75% |
+| Hartigan-Wong | stats | 1 | 17.2 s | +3.82% | 126.3 s | +1.73% |
+| mini-batch | ClusterR | 1 | 37.5 s | -0.11% | 139.6 s | +2.69% |
+
+- `shoal_emeans()` is the fastest method at both k, and the two e-means
+  implementations reach the lowest losses, below converged Lloyd. It is 1.6
+  to 2.6 times faster than the reference implementation on the same CPU,
+  and 3.7 to 4.8 times faster than the fastest Lloyd run, which it beats on
+  loss by 1 to 3 percentage points. At matched batch size and passes it is
+  2 to 2.3 times faster than scikit-learn's mini-batch k-means, at a loss
+  about 3 points lower.
+- Over five seeds each, the two e-means implementations are level at
+  k = 1024, with mean losses of -1.43% for shoal and -1.61% for the
+  reference. At k = 256 shoal's mean is 0.4 points lower, -1.06% against
+  -0.62%, a gap similar to the spread of the reference's seeds. Over 80
+  seeds on AlphaEarth embeddings their mean losses agreed to 0.01%.
+- `shoal_kmeans()` defaults to a k-means++ start, which here costs more than
+  the iterations: 57 s in all at k = 256, against 8.9 s from random rows,
+  for a loss 0.9 points lower. Its cost grows with the square of k, because
+  linfa recomputes each row's distance to every centre chosen so far, and at
+  k = 1024 it had not finished after nine minutes. The table therefore uses
+  random starts throughout.
+- Base R's Hartigan-Wong stops after one to seven iterations at this size,
+  warning that its quick-transfer stage exceeded its step limit, so its row
+  measures an aborted fit. ClusterR's mini-batch k-means is single-threaded.
+- faiss's OpenMP threads time erratically on this hybrid CPU of 6
+  performance and 8 efficiency cores, and its default of all 20 was its
+  slowest setting. It is timed at 6, 12 and 20 threads and keeps its
+  fastest. faiss and the reference run in float32, the rest in float64.
+  shoal's time includes a final exact assignment pass that the reference
+  skips.
+- One dataset, and one seed per method in the table.
+
+**These are CPU timings only.** The e-means paper's fastest results are on
+GPUs, where the reference runs through PyTorch with Triton or CuTe kernels,
+and faiss also has a GPU k-means. shoal has no GPU path and has not been
+compared with either, so nothing here is a claim about GPU performance.
+
 ## Running the benchmarks
 
 Everything runs from the project root through the Makefile in this
@@ -66,6 +126,7 @@ directory:
 make -C bench            # data, release install, R and Python runs, collation
 make -C bench bench-r    # the R side only
 make -C bench compare    # tables and the figure from existing results
+make -C bench bench-emeans  # the e-means benchmark, about 15 minutes
 ```
 
 The steps behind those targets:
