@@ -21,8 +21,18 @@ test_that("print methods report each algorithm's extra components", {
   expect_match(printed(ev), "Layers \\(finest first")
   expect_match(printed(ev), "persistence")
 
+  em <- shoal_emeans(emb, k = 4L)
+  expect_match(printed(em), "e-means Clustering")
+  expect_match(printed(em), "Within-cluster sum of squares")
+  expect_match(printed(em), "Cluster sizes: [0-9]+, ")
+  expect_match(printed(em), "Training: 5 epochs, [0-9]+ updates")
+  # Many clusters: the sizes are summarised, not listed.
+  em_many <- shoal_emeans(emb, k = 30L, metric = "cosine")
+  expect_match(printed(em_many), "Metric: .*cosine")
+  expect_match(printed(em_many), "Cluster sizes: min [0-9]+, median")
+
   # print() returns its argument invisibly for every method.
-  for (fit in list(km, gm, ev)) {
+  for (fit in list(km, gm, ev, em)) {
     expect_invisible(print(fit))
     expect_identical(withVisible(print(fit))$value, fit)
   }

@@ -40,7 +40,8 @@
 #'   `n_noise` (always `0`), `data`, `algorithm`, `params`, `centroids`
 #'   (a `k x ncol(x)` matrix), `inertia` and `sizes`.
 #'
-#' @seealso [predict.shoal_kmeans()] for assigning new observations.
+#' @seealso [predict.shoal_kmeans()] for assigning new observations, and
+#'   [shoal_emeans()] for many clusters on large data.
 #'
 #' @examples
 #' fit <- shoal_kmeans(as.matrix(iris[, 1:4]), k = 3L)
@@ -93,14 +94,16 @@ shoal_kmeans <- function(x, k,
 #' Assign New Observations to Fitted Clusters
 #'
 #' Assigns each row of `newdata` to the nearest centroid by squared Euclidean
-#' distance.
+#' distance, or for a cosine [shoal_emeans()] model to the centroid of largest
+#' cosine similarity. For a [shoal_emeans()] model, predicting the training
+#' data reproduces its `cluster` exactly.
 #'
 #' Only algorithms with a notion of a cluster centre can do this. The
 #' density-based methods deliberately have no `predict()` method, so calling
 #' [predict()] on their results raises R's standard "no applicable method"
 #' error rather than a bespoke one.
 #'
-#' @param object A fitted [shoal_kmeans()] model.
+#' @param object A fitted [shoal_kmeans()] or [shoal_emeans()] model.
 #' @param newdata A numeric matrix or data frame with the same columns as the
 #'   data the model was fitted to. Omit it to return the training assignments.
 #' @param ... Ignored.

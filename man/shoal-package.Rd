@@ -16,6 +16,9 @@ cluster vector wherever an algorithm has them.
 \itemize{
 \item \code{\link[=shoal_kmeans]{shoal_kmeans()}}: k-means, partitioning into a fixed number of compact
 clusters, with \code{predict()} for new observations.
+\item \code{\link[=shoal_emeans]{shoal_emeans()}}: e-means, k-means fitted by mini-batch moving averages
+for many clusters on large data, with a cosine mode for embedding
+vectors.
 \item \code{\link[=shoal_gmm]{shoal_gmm()}}: Gaussian mixtures, soft probabilistic assignment with
 elliptical clusters, and \code{logLik()} so \code{AIC()} and \code{BIC()} can choose the
 component count.

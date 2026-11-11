@@ -11,6 +11,9 @@
 #'
 #' - [shoal_kmeans()]: k-means, partitioning into a fixed number of compact
 #'   clusters, with `predict()` for new observations.
+#' - [shoal_emeans()]: e-means, k-means fitted by mini-batch moving averages
+#'   for many clusters on large data, with a cosine mode for embedding
+#'   vectors.
 #' - [shoal_gmm()]: Gaussian mixtures, soft probabilistic assignment with
 #'   elliptical clusters, and `logLik()` so `AIC()` and `BIC()` can choose the
 #'   component count.

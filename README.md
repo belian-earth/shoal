@@ -14,7 +14,7 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 <!-- badges: end -->
 
 shoal is a fast, foundational toolkit for clustering in R, with Rust
-backends behind one consistent interface. Seven clustering algorithms,
+backends behind one consistent interface. Eight clustering algorithms,
 from k-means to EVoC and graph SLIC, take a numeric matrix or data frame
 and return one shared result class that prints and plots the same way,
 with noise points as `NA`. Alongside them are the building blocks
@@ -27,6 +27,7 @@ Python alternatives.
 | Function | Algorithm | Backend | Reach for it when |
 |----|----|----|----|
 | `shoal_kmeans()` | k-means | [linfa](https://github.com/rust-ml/linfa) | Clusters are roughly spherical and you know how many to expect. |
+| `shoal_emeans()` | e-means (mini-batch k-means) | In-tree port of [e-means](https://github.com/facebookresearch/faiss/tree/main/contrib/e_means) | You need many clusters on large data, such as a codebook or a fine partition of embeddings; `metric = "cosine"` clusters directions. |
 | `shoal_gmm()` | Gaussian mixture | linfa | Clusters are elliptical, or you want soft memberships and `BIC()`. |
 | `shoal_dbscan()` | DBSCAN | [petal-clustering](https://github.com/petabi/petal-clustering) | Clusters have arbitrary shape and a common density. |
 | `shoal_hdbscan()` | HDBSCAN | petal-clustering | Clusters have arbitrary shape and varying density. |
@@ -142,7 +143,16 @@ to [petal-clustering](https://github.com/petabi/petal-clustering) by
 [Petabi](https://github.com/petabi); hierarchical clustering to
 [kodama](https://github.com/diffeo/kodama), a Rust port of
 *fastcluster*; k-means and Gaussian mixtures to
-[linfa](https://github.com/rust-ml/linfa); and EVoC to a Rust port of
-the [reference implementation](https://github.com/TutteInstitute/evoc)
-by Leland McInnes and the Tutte Institute, validated against fixtures
-generated from it. shoal is an R interface to their work.
+[linfa](https://github.com/rust-ml/linfa); EVoC to a Rust port of the
+[reference implementation](https://github.com/TutteInstitute/evoc) by
+Leland McInnes and the Tutte Institute; and e-means to a Rust port of
+the [reference
+implementation](https://github.com/facebookresearch/faiss/tree/main/contrib/e_means)
+in faiss by Gergely Szilvasy, Swann Bessa and Matthijs Douze at Meta
+FAIR, distributed under the MIT licence, whose notice is reproduced in
+`src/rust/src/emeans.rs`. Both ports are validated against fixtures
+generated from their reference implementations. The e-means method is
+described by Bessa, Mazaré, Szilvasy, Touvron, Picard, Douze and Jégou
+(2026), [*e-means: outperforming k-means (in one-tenth the
+epochs)*](https://arxiv.org/abs/2611.09501); please cite it if you use
+`shoal_emeans()`. shoal is an R interface to their work.

@@ -5,8 +5,11 @@ Authors@R:
     person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
 Description: A small, foundational set of clustering algorithms with Rust
     backends, presented behind one consistent interface: k-means and Gaussian
-    mixtures via 'linfa', the density-based methods DBSCAN and HDBSCAN via
-    'petal-clustering', agglomerative hierarchical clustering via 'kodama',
+    mixtures via 'linfa', e-means, mini-batch k-means for many clusters on
+    large data with a cosine (spherical) mode, via an in-tree port of the
+    reference implementation in 'faiss', the density-based methods DBSCAN
+    and HDBSCAN via 'petal-clustering', agglomerative hierarchical
+    clustering via 'kodama',
     EVoC, direct multi-granularity clustering of embedding vectors, via an
     in-tree port of the reference implementation, and graph SLIC superpixels
     over any point set with a neighbour graph. All algorithms return

@@ -30,6 +30,10 @@ rust_kmeans <- function(x, k, init, n_runs, max_iter, tolerance, seed) .Call(wra
 
 rust_nearest_centroid <- function(x, centroids) .Call(wrap__rust_nearest_centroid, x, centroids)
 
+rust_emeans <- function(x, k, epochs, batch_law, batch_size, alpha0, revive, cosine, seed) .Call(wrap__rust_emeans, x, k, epochs, batch_law, batch_size, alpha0, revive, cosine, seed)
+
+rust_emeans_assign <- function(x, centroids, cosine) .Call(wrap__rust_emeans_assign, x, centroids, cosine)
+
 rust_gmm <- function(x, k, init, n_runs, max_iter, tolerance, reg_covariance, seed) .Call(wrap__rust_gmm, x, k, init, n_runs, max_iter, tolerance, reg_covariance, seed)
 
 rust_evoc <- function(x, n_neighbors, noise_level, min_cluster_size, min_samples, n_epochs, dim, min_similarity_threshold, max_layers, n_label_prop_iter, seed) .Call(wrap__rust_evoc, x, n_neighbors, noise_level, min_cluster_size, min_samples, n_epochs, dim, min_similarity_threshold, max_layers, n_label_prop_iter, seed)
