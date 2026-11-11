@@ -127,9 +127,9 @@ e-means has a benchmark of its own, at 500,000 rows and up to 1024
 clusters, scored for loss as well as time. There
 [`shoal_emeans()`](https://belian-earth.github.io/shoal/reference/shoal_emeans.md)
 is 1.6 to 2.6 times faster than the reference implementation and 3.7 to
-4.8 times faster than the fastest Lloyd’s k-means, at a lower loss.
-These comparisons are on CPU only. GPU implementations, the reference’s
-own included, have not been compared.
+4.8 times faster than the fastest Lloyd’s k-means from the same random
+start, at a lower loss. These comparisons are on CPU only. GPU
+implementations, the reference’s own included, have not been compared.
 
 The Rust backends run their parallel stages on a thread pool owned by
 the package, which by default uses every logical core.

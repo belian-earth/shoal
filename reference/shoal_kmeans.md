@@ -32,9 +32,13 @@ shoal_kmeans(
 
 - init:
 
-  Initialisation method. `"kmeans++"` (default) is the usual choice;
-  `"kmeans_parallel"` scales better past roughly 100 clusters;
-  `"random"` is the naive baseline.
+  Initialisation method. `"kmeans++"` (default) draws each centre in
+  turn, with probability proportional to its squared distance from the
+  nearest centre so far, and takes the time of a few Lloyd iterations.
+  `"kmeans_parallel"` is k-means\|\|, which draws candidates in eight
+  rounds and reduces them to `k` by k-means++; it takes up to four times
+  as long as `"kmeans++"` and reaches a similar loss. `"random"` starts
+  from `k` random rows.
 
 - n_runs:
 
@@ -74,7 +78,7 @@ observations to the fitted centroids.
 
 k-means is stochastic in its initialisation, so `seed` is a parameter
 rather than being taken from R's RNG. The same `seed` and parameters
-always give the same partition;
+always give the same partition, whatever the thread count;
 [`set.seed()`](https://rdrr.io/r/base/Random.html) has no effect on it.
 
 ## Choosing k
