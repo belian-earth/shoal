@@ -16,8 +16,10 @@ Two kinds of fixture:
   (begin / accumulate / update / end_epoch / finalize) with a given start and
   rows in their natural order every epoch, so the comparison exercises the
   update rule, the schedule, revival and the closing means without depending
-  on either side's random number generator. Revival is only included where
-  exactly one donor exists, which makes its choice deterministic.
+  on either side's random number generator. Each run also records the
+  uniforms the reference's revival stream (RandomState(0)) supplies, which
+  the Rust test replays, so the choice of donors is compared too. Every run
+  asserts that it exercises the rule it was added for.
 """
 
 import math
@@ -51,16 +53,31 @@ def unit_rows(x):
 
 
 def run(x, init, k, epochs, batch, alpha0, tau, spherical):
+    """Train through the caller API, rows in natural order every epoch.
+
+    Returns the closing centroids, the per-epoch objectives, the number of
+    splits, the revival uniforms, and whether some centroid was left
+    unassigned in the final epoch and some centroid missed a batch.
+    """
     n, d = x.shape
     em = NumpyEmeans(d, k, nepochs=epochs, batch_size=batch, alpha0=alpha0, seed=0,
                      unused_threshold=tau, spherical=spherical, capture_assignments=False)
     em.begin(n, init)
+    b = em.recipe["batch_size"]
+    missed = False
     for rows in em.recipe["epoch_rows"]:
-        for b0 in range(0, rows, batch):
-            em.update(em.accumulate(x[b0:min(b0 + batch, rows)]))
+        for b0 in range(0, rows, b):
+            stats = em.accumulate(x[b0:min(b0 + b, rows)])
+            missed |= bool((stats["counts"] == 0).any())
+            em.update(stats)
         em.end_epoch()
+    unassigned = bool((em._pass_counts == 0).any())
     c = em.finalize()
-    return c, list(em.obj), em.n_splits
+    # Revival draws k uniforms per split event from RandomState(seed), and
+    # there is at most one event per check.
+    events = em.recipe["total_steps"] // 5 + 1
+    uniforms = np.random.RandomState(0).random_sample(k * events)
+    return c, list(em.obj), em.n_splits, uniforms, unassigned, missed
 
 
 def q(s):
@@ -89,7 +106,7 @@ def main():
         "    pub epochs: f64, pub batch: usize, pub alpha0: f64, pub revive: f64,",
         "    pub cosine: bool, pub init_rows: &'static [usize], pub init_extra: &'static [f64],",
         "    pub want_centroids: &'static [f64], pub want_objective: &'static [f64],",
-        "    pub want_splits: usize,",
+        "    pub want_splits: usize, pub uniforms: &'static [f64],",
         "}",
         "",
         "pub const RECIPES: &[RecipeCase] = &[",
@@ -112,6 +129,14 @@ def main():
         (100000, 256, 32, 5, "auto", 4096, 0.05, 0.2),
         (100000, 256, 32, 2.25, "throughput", None, None, 0.0),
         (7, 2, 3, 2.5, "auto", 3, None, None),
+        # The throughput cap binds (raw batch 156.6), and would differ from
+        # the quality law's n // 2.
+        (100, 100, 8, 50, "throughput", None, None, None),
+        (100, 100, 8, 100, "throughput", None, None, None),
+        # A fractional prefix of exactly half a row rounds to even.
+        (5, 2, 3, 1.5, "auto", None, None, None),
+        # The step law's lower clamp.
+        (1000000, 10000, 64, 5, "auto", 1, None, None),
     ]
     for n, k, d, epochs, law, batch, alpha0, revive in recipe_grid:
         resolved, _ = _resolve_batch_law(law, d)
@@ -119,12 +144,13 @@ def main():
         rows = _epoch_rows(n, epochs)
         steps = sum((r + b - 1) // b for r in rows)
         tau = _resolve_unused_threshold(revive, d)
+        want_law = "" if batch is not None else resolved
         opt = lambda v: "None" if v is None else "Some(%r)" % v  # noqa: E731
         lines.append(
             "    RecipeCase { n: %d, k: %d, d: %d, epochs: %r, law: %s, batch_size: %s, "
             "alpha0: %s, revive: %s, want_law: %s, want_batch: %d, want_alpha0: %r, "
             "want_rows: &%r, want_steps: %d, want_revive: %r },"
-            % (n, k, d, float(epochs), q(law), opt(batch), opt(alpha0), opt(revive), q(resolved),
+            % (n, k, d, float(epochs), q(law), opt(batch), opt(alpha0), opt(revive), q(want_law),
                b, float(a0), rows, steps, float(tau))
         )
     lines += ["];", "", "pub const RUNS: &[RunCase] = &["]
@@ -132,25 +158,48 @@ def main():
     x = data(40, 3)
     xu = unit_rows(x)
     far = np.array([[100.0, 100.0, 100.0]], dtype=np.float32)
+    far3 = np.array([[100.0, 100.0, 100.0], [-100.0, 50.0, 0.0], [50.0, -100.0, 100.0]],
+                    dtype=np.float32)
+    # Directions no row is closest to: opposite the data's mean direction.
+    away = -xu.astype(np.float64).sum(0)
+    away = (away / np.linalg.norm(away)).astype(np.float32)
+    tilt = away + np.float32(0.05) * np.array([1.0, -1.0, 0.0], dtype=np.float32)
+    away2 = np.vstack([away, (tilt / np.linalg.norm(tilt)).astype(np.float32)])
     runs = [
-        # name, data, init rows, extra init rows, k, epochs, batch, alpha0, tau, spherical
-        ("euclidean", x, [0, 1, 2], None, 3, 2.5, 8, 0.6, 0.0, False),
-        ("revival", x, [0], far, 2, 2.0, 4, 1.0, 0.1, False),
-        ("prefix", x, [0, 1, 2], None, 3, 0.6, 8, 0.4, 0.0, False),
-        ("cosine", xu, [0, 1, 2], None, 3, 3.0, 8, 0.5, 0.0, True),
+        # name, data, init rows, extra init rows, k, epochs, batch, alpha0, tau,
+        # spherical, then what the run must exercise
+        ("euclidean", x, [0, 1, 2], None, 3, 2.5, 8, 0.6, 0.0, False, {}),
+        ("revival", x, [0], far, 2, 2.0, 4, 1.0, 0.1, False, {"splits": 1}),
+        ("prefix", x, [0, 1, 2], None, 3, 0.6, 8, 0.4, 0.0, False, {}),
+        ("cosine", xu, [0, 1, 2], None, 3, 3.0, 8, 0.5, 0.0, True, {}),
+        # Centroids missing batches (their masses decay untouched) and one
+        # never assigned, which keeps its position at the close.
+        ("decay", x, [0, 1, 2, 3, 4], far, 6, 3.0, 4, 0.3, 0.0, False,
+         {"missed": True, "unassigned": True}),
+        # Three starved centroids and five donors: the Gumbel draw chooses.
+        ("revival_many", x, [0, 1, 2, 3, 4], far3, 8, 2.0, 4, 0.5, 0.1, False, {"splits": 3}),
+        ("cosine_revival", xu, [0, 1, 2], away2, 5, 2.0, 4, 0.5, 0.1, True, {"splits": 2}),
+        # A direction never assigned keeps its (normalised) position.
+        ("cosine_closing", xu, [0, 1, 2], away[None, :], 4, 2.0, 8, 0.5, 0.0, True,
+         {"unassigned": True}),
     ]
-    for name, xx, rows, extra, k, epochs, batch, alpha0, tau, sph in runs:
+    for name, xx, rows, extra, k, epochs, batch, alpha0, tau, sph, needs in runs:
         init = xx[rows]
         if extra is not None:
             init = np.vstack([init, extra])
-        c, obj, splits = run(xx, init, k, epochs, batch, alpha0, tau, sph)
+        c, obj, splits, uniforms, unassigned, missed = run(
+            xx, init, k, epochs, batch, alpha0, tau, sph)
+        assert splits >= needs.get("splits", 0), (name, splits)
+        assert unassigned or not needs.get("unassigned"), name
+        assert missed or not needs.get("missed"), name
         lines.append(
             "    RunCase { name: %s, n: %d, d: %d, k: %d, epochs: %r, batch: %d, alpha0: %r, "
             "revive: %r, cosine: %s, init_rows: &%r, init_extra: %s, want_centroids: %s, "
-            "want_objective: %s, want_splits: %d },"
+            "want_objective: %s, want_splits: %d, uniforms: %s },"
             % (q(name), xx.shape[0], xx.shape[1], k, float(epochs), batch, float(alpha0),
                float(tau), "true" if sph else "false", rows,
-               f64s(extra) if extra is not None else "&[]", f64s(c), f64s(obj), splits)
+               f64s(extra) if extra is not None else "&[]", f64s(c), f64s(obj), splits,
+               f64s(uniforms))
         )
     lines += ["];", ""]
 

@@ -303,7 +303,9 @@ fn rust_nearest_centroid(x: RMatrix<f64>, centroids: RMatrix<f64>) -> Integers {
 // Settings left to the recipe arrive as sentinels: `batch_size` 0, and
 // `alpha0` or `revive` NaN. In cosine mode, rows with no direction (all
 // zero) are counted before anything else runs; when there are any, the list
-// carries only that count, for the R side to report.
+// carries only that count, for the R side to report. `finite` is false when
+// the distances overflowed, and `batch_law` is empty when the batch size
+// was given.
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rust_emeans(
@@ -343,13 +345,14 @@ fn rust_emeans(
     let epoch_rows: Vec<f64> = fit.recipe.epoch_rows.iter().map(|&r| r as f64).collect();
     list!(
         zero_rows = 0.0,
+        finite = fit.finite,
         cluster = cluster,
         centroids = centroids,
         inertia = fit.inertia,
         sizes = fit.sizes,
         epoch_objective = fit.epoch_objective,
         n_splits = fit.n_splits as f64,
-        batch_law = fit.recipe.law.name(),
+        batch_law = fit.recipe.law.map_or("", |l| l.name()),
         batch_size = fit.recipe.batch_size as f64,
         alpha0 = fit.recipe.alpha0,
         epoch_rows = epoch_rows,
@@ -361,7 +364,7 @@ fn rust_emeans(
 // Nearest e-means centroid of each row, normalising rows first in cosine
 // mode. Backs `predict()`; matches the fit's own final assignment row for
 // row. As in `rust_emeans`, zero rows in cosine mode are reported, not
-// assigned.
+// assigned, and `finite` flags overflowed distances.
 #[extendr]
 fn rust_emeans_assign(x: RMatrix<f64>, centroids: RMatrix<f64>, cosine: bool) -> List {
     let d = x.ncols();
@@ -373,9 +376,9 @@ fn rust_emeans_assign(x: RMatrix<f64>, centroids: RMatrix<f64>, cosine: bool) ->
             return list!(zero_rows = zero as f64);
         }
     }
-    let labels = threads::pool().install(|| emeans::assign(data, d, &c, cosine));
+    let (labels, finite) = threads::pool().install(|| emeans::assign(data, d, &c, cosine));
     let cluster: Vec<i32> = labels.iter().map(|&j| j as i32 + 1).collect();
-    list!(zero_rows = 0.0, cluster = cluster)
+    list!(zero_rows = 0.0, finite = finite, cluster = cluster)
 }
 
 // Gaussian mixture model.

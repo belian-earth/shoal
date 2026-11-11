@@ -26,7 +26,8 @@ test_that("results do not depend on the thread count", {
     hdbscan = shoal_hdbscan(x)$cluster,
     evoc = shoal_evoc(emb, min_cluster_size = 15L)$layers,
     kmeans = shoal_kmeans(x, k = 3L)[c("cluster", "centroids", "inertia")],
-    emeans = shoal_emeans(emb, k = 8L)[c("cluster", "centroids", "inertia", "epoch_objective")],
+    # A batch of several assignment tiles, so training runs in parallel too.
+    emeans = shoal_emeans(emb, k = 8L, batch_size = 256L)[c("cluster", "centroids", "inertia", "epoch_objective")],
     emeans_cos = shoal_emeans(emb, k = 8L, metric = "cosine")[c("cluster", "centroids", "inertia")],
     gmm = shoal_gmm(x, k = 3L)[c("cluster", "means", "loglik")],
     sil = shoal_silhouette(shoal_dist(x), shoal_kmeans(x, k = 3L))$width

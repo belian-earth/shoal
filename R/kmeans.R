@@ -96,7 +96,7 @@ shoal_kmeans <- function(x, k,
 #' Assigns each row of `newdata` to the nearest centroid by squared Euclidean
 #' distance, or for a cosine [shoal_emeans()] model to the centroid of largest
 #' cosine similarity. For a [shoal_emeans()] model, predicting the training
-#' data reproduces its `cluster` exactly.
+#' data on the machine that fitted it reproduces its `cluster` exactly.
 #'
 #' Only algorithms with a notion of a cluster centre can do this. The
 #' density-based methods deliberately have no `predict()` method, so calling
@@ -124,4 +124,22 @@ predict.shoal_kmeans <- function(object, newdata = NULL, ...) {
   check_newdata_columns(newdata, object$centroids)
 
   rust_nearest_centroid(newdata, object$centroids)
+}
+
+#' @rdname predict.shoal_kmeans
+#' @export
+predict.shoal_emeans <- function(object, newdata = NULL, ...) {
+  if (is.null(newdata)) {
+    return(object$cluster)
+  }
+
+  newdata <- check_numeric_matrix(newdata, na_action = "error")
+  check_newdata_columns(newdata, object$centroids)
+
+  res <- rust_emeans_assign(
+    newdata, object$centroids, identical(object$metric, "cosine")
+  )
+  check_no_zero_rows(res$zero_rows, "newdata")
+  check_finite_distances(res$finite, "newdata")
+  res$cluster
 }

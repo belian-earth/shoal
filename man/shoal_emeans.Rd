@@ -23,9 +23,9 @@ matrix using their numeric columns (non-numeric columns are dropped).}
 \item{k}{Number of clusters. Must be at least 1 and no more than
 \code{nrow(x)}.}
 
-\item{epochs}{Number of passes over the data, the training budget.
-Fractional values train on a random fraction of the rows for one of
-the passes. Default \code{5}, upstream's.}
+\item{epochs}{Number of passes over the data, the training budget, at
+most 1000. A fractional value visits a random fraction of the rows in
+one of the passes. Default \code{5}, as upstream.}
 
 \item{metric}{\code{"euclidean"} (default) for k-means, or \code{"cosine"} for
 spherical k-means on directions; see the Cosine mode section.}
@@ -33,7 +33,8 @@ spherical k-means on directions; see the Cosine mode section.}
 \item{batch_law}{Which fitted law sets the batch size when \code{batch_size}
 is not given: \code{"auto"} (default), \code{"throughput"} or \code{"quality"}.}
 
-\item{batch_size}{Rows per update. \code{NULL} (default) uses the batch law.}
+\item{batch_size}{Rows per update, capped at \code{nrow(x)}. \code{NULL} (default)
+uses the batch law.}
 
 \item{alpha0}{Initial step of the moving average, in \eqn{(0, 1]}. \code{NULL}
 (default) uses the step law at the batch size in use.}
@@ -53,77 +54,94 @@ An object of class
 components \code{cluster} (integer vector of cluster IDs), \code{n_clusters},
 \code{n_noise} (always \code{0}), \code{data}, \code{algorithm}, \code{params}, \code{metric},
 \code{centroids} (a \verb{k x ncol(x)} matrix), \code{inertia}, \code{sizes},
-\code{epoch_objective} (per epoch, the sum of squared distances of the rows
-visited to the centroids they were assigned against, which move during
-the epoch: a training trace, not the final error), \code{n_splits} (clusters
-revived) and \code{recipe}, the plan used: \code{batch_law}, \code{batch_size},
-\code{alpha0}, \code{epoch_rows} (rows visited per epoch), \code{total_steps} and
-\code{revive_threshold}.
+\code{epoch_objective}, \code{n_splits} and \code{recipe}.
+
+\code{epoch_objective} gives, per epoch, the sum of squared distances from
+the rows visited to the centroids they were assigned against. Those
+centroids move during the epoch, so it is a record of training, not the
+final error. \code{n_splits} counts revivals, and a cluster can be revived
+more than once. \code{recipe} is the plan used: \code{batch_law}, which is \code{NA}
+when \code{batch_size} was given, \code{batch_size}, \code{alpha0}, \code{epoch_rows} (rows
+visited per epoch), \code{total_steps} and \code{revive_threshold}.
 }
 \description{
 k-means fitted by e-means (Bessa et al. 2026), via an in-tree Rust port
 of the reference implementation in
 \href{https://github.com/facebookresearch/faiss/tree/main/contrib/e_means}{faiss}
 (Meta FAIR). Lloyd's algorithm, behind \code{\link[=shoal_kmeans]{shoal_kmeans()}}, recomputes every
-centroid from all the data at each iteration. e-means visits the data in
-random mini-batches instead, moving each centroid towards its batch mean
-by an exponential moving average, with the batch size and step size set
-by scaling laws the authors fitted on the number of rows, clusters and
-passes. It minimises the same within-cluster sum of squares, and reaches
-the loss of a converged k-means in a handful of passes over the data,
-which makes large \code{k} on large data practical.
+centroid from all the data at each iteration. e-means instead visits the
+data in random mini-batches and moves each centroid towards its batch
+mean by an exponential moving average. The batch size and step size come
+from scaling laws the authors fitted on the number of rows, clusters and
+passes. It minimises the same within-cluster sum of squares, and with
+many rows and hundreds of clusters or more it reaches the loss of a
+converged k-means in a handful of passes over the data.
 }
 \section{When to use it}{
-e-means is for scale: many rows and many clusters, such as codebooks,
-vector quantisation or a fine partition of an embedding collection. The
-scaling laws were fitted on \eqn{10^5} to \eqn{10^8} rows and 256 to
-65,536 clusters. Outside that range e-means still runs, but its settings
-are not tuned there. For a few clusters, prefer \code{\link[=shoal_kmeans]{shoal_kmeans()}}: its
-k-means++ start avoids the poor local minima a random start can settle
-in when \code{k} is small, and on small data Lloyd's algorithm converges in
-moments anyway.
+e-means is for scale: many rows and many clusters. Typical uses are a
+codebook for vector quantisation, a fixed set of centroids that stands in
+for every vector nearest to it, and a fine partition of an embedding
+collection. The scaling laws were fitted on \eqn{10^5} to \eqn{10^8} rows
+and 256 to 65,536 clusters. Outside that range e-means still runs, but
+its settings are not tuned there. On small data with few clusters, prefer
+\code{\link[=shoal_kmeans]{shoal_kmeans()}}. Its restarts, ten by default, guard against the poor
+local minima that a single random start can settle in, and e-means makes
+one random start.
 
-The cost is fixed by \code{epochs}, one pass over the data per epoch plus one
-for the final assignment, with no restarts and no convergence test.
+The cost is fixed by \code{epochs}: one pass over the data per epoch, plus one
+for the final assignment. There are no restarts and no convergence test.
+
+Results do not depend on where the data sits. Euclidean mode works
+relative to the column means, so projected coordinates far from the
+origin cluster as well as local ones.
 }
 
 \section{Cosine mode}{
 \code{metric = "cosine"} is spherical k-means, for embedding vectors compared
 by cosine similarity. Rows are scaled to unit length internally, each is
 assigned to the centroid of largest cosine similarity, and the centroids
-are unit vectors: the normalised mean directions of their clusters.
-Rescaling rows therefore has no effect. A row of all zeros has no
-direction and is an error. \code{inertia} is then the sum of squared distances
-between the unit rows and their unit centroids, \eqn{\sum 2(1 - \cos\theta)}.
+are unit vectors. Rescaling rows therefore has no effect. A row of all
+zeros has no direction and is an error. \code{inertia} is then the sum of
+squared distances between the unit rows and their unit centroids,
+\eqn{\sum 2(1 - \cos\theta)}.
 }
 
 \section{The training plan}{
 Unless given, the batch size and the initial step \code{alpha0} come from the
-fitted laws, and the step is cosine-annealed to a tenth of \code{alpha0} over
-the run. \code{batch_law = "quality"} uses batches about eight times smaller
-than \code{"throughput"}, trading speed for a lower final loss; \code{"auto"}
-chooses \code{"quality"} for data with at most 16 columns and \code{"throughput"}
-above, as upstream does. Every five updates, clusters whose running mass
-has fallen below \code{revive_threshold} times the mean are revived by
-splitting a large one. The plan actually used is returned in \code{recipe}.
+fitted laws. The step then falls along half a cosine curve to a tenth of
+\code{alpha0} by the end of the run. \code{batch_law = "quality"} uses batches
+about eight times smaller than \code{"throughput"}, trading speed for a lower
+final loss; \code{"auto"} chooses \code{"quality"} for data with at most 16
+columns and \code{"throughput"} above, as upstream does.
+
+Each centroid carries a running mass, a moving average of the number of
+rows assigned to it. Every five updates, clusters whose mass has fallen
+below \code{revive_threshold} times the mean mass are revived: a donor drawn
+in proportion to its mass is split in two, and one half takes the place
+of the starved cluster. The plan used is returned in \code{recipe}.
 }
 
 \section{Assignments}{
-\code{cluster} is each row's nearest final centroid, from one exact pass after
-training, so \code{cluster}, \code{centroids}, \code{inertia} and \code{sizes} describe the
-same partition and agree with \code{\link[=predict]{predict()}}. (The reference implementation
-saves that pass by returning the labels from the last training epoch,
-while the centroids were still moving.) A centroid can end the run with
-no points; \code{sizes} then has a zero for it, and \code{n_clusters} counts only
-the clusters with points.
+The centroids are the means of the rows assigned to them during the final
+training epoch, scaled to unit length in cosine mode. One exact pass then
+assigns each row to its nearest final centroid, so \code{cluster}, \code{inertia}
+and \code{sizes} describe the partition the centroids induce, and \code{\link[=predict]{predict()}}
+on the training data reproduces \code{cluster}. The reference implementation
+saves that pass and returns the labels from the last training epoch,
+during which the centroids were still moving. A centroid can end the run
+with no points. \code{sizes} then has a zero for it, and \code{n_clusters} counts
+only the clusters with points.
 }
 
 \section{Reproducibility}{
 As in \code{\link[=shoal_kmeans]{shoal_kmeans()}}, \code{seed} is a parameter rather than being taken
 from R's RNG. The same seed, parameters and data give identical results
-whatever the thread count. A seed does not reproduce a run of the
-reference implementation, whose random streams differ; the port is
-checked against it with the start and batch order fixed instead.
+whatever the thread count. Between machines, results can differ by
+rounding, because the matrix-product kernel is chosen for the CPU, and a
+row at a near-tie between two centroids can then change cluster. A seed
+does not reproduce a run of the reference implementation, whose random
+streams differ; the port is checked against it with the start, the batch
+order and the random draws fixed instead.
 }
 
 \examples{
@@ -150,6 +168,6 @@ Reference implementation: \code{faiss.contrib.e_means},
 \url{https://github.com/facebookresearch/faiss/tree/main/contrib/e_means}
 }
 \seealso{
-\code{\link[=shoal_kmeans]{shoal_kmeans()}} for Lloyd's algorithm with a k-means++ start,
+\code{\link[=shoal_kmeans]{shoal_kmeans()}} for Lloyd's algorithm with k-means++ restarts,
 and \code{\link[=predict.shoal_kmeans]{predict.shoal_kmeans()}} for assigning new observations.
 }

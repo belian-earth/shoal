@@ -88,3 +88,38 @@ print.shoal_gmm <- function(x, ...) {
 
   invisible(x)
 }
+
+#' @rdname print.shoal
+#' @export
+print.shoal_emeans <- function(x, ...) {
+  # The shared heading, then the k-means summary with the sizes condensed:
+  # e-means is for large k, where listing every size would fill the console.
+  print.shoal_clustering(x)
+
+  sizes <- x$sizes
+  shown <- if (length(sizes) <= 10L) {
+    paste(sizes, collapse = ", ")
+  } else {
+    sprintf(
+      "min %d, median %s, max %d",
+      min(sizes), format(stats::median(sizes)), max(sizes)
+    )
+  }
+  empty <- sum(sizes == 0L)
+  cli::cli_text("Within-cluster sum of squares: {signif(x$inertia, 5L)}")
+  cli::cli_text(
+    "Cluster sizes: {shown}{if (empty > 0L) sprintf(' (%d empty)', empty) else ''}"
+  )
+
+  r <- x$recipe
+  # Numeric, not formatted: cli pluralises on the value.
+  passes <- signif(sum(r$epoch_rows) / nrow(x$data), 4L)
+  law <- if (is.na(r$batch_law)) "batch size given" else paste(r$batch_law, "batch law")
+  cli::cli_text(
+    "Training: {passes} epoch{?s}, {r$total_steps} update{?s} of ",
+    "{r$batch_size} row{?s} ({law}), initial step {signif(r$alpha0, 3L)}, ",
+    "{x$n_splits} revival{?s}"
+  )
+
+  invisible(x)
+}

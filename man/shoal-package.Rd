@@ -96,5 +96,15 @@ Authors:
   \item First Last \email{first.last@example.com}
 }
 
+Other contributors:
+\itemize{
+  \item Gergely Szilvasy (e-means reference implementation) [contributor]
+  \item Swann Bessa (e-means reference implementation) [contributor]
+  \item Matthijs Douze (e-means reference implementation) [contributor]
+  \item Meta Platforms, Inc. and affiliates (e-means reference implementation) [copyright holder]
+  \item Leland McInnes (EVoC reference implementation) [contributor]
+  \item Tutte Institute for Mathematics and Computing (EVoC reference implementation) [copyright holder]
+}
+
 }
 \keyword{internal}

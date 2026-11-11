@@ -136,11 +136,11 @@ EVoC to a Rust port of the
 [reference implementation](https://github.com/TutteInstitute/evoc) by Leland
 McInnes and the Tutte Institute; and e-means to a Rust port of the
 [reference implementation](https://github.com/facebookresearch/faiss/tree/main/contrib/e_means)
-in faiss by Gergely Szilvasy, Swann Bessa and Matthijs Douze at Meta FAIR,
-distributed under the MIT licence, whose notice is reproduced in
-`src/rust/src/emeans.rs`. Both ports are validated against fixtures generated
-from their reference implementations. The e-means method is described by
-Bessa, Mazaré, Szilvasy, Touvron, Picard, Douze and Jégou (2026),
-[*e-means: outperforming k-means (in one-tenth the epochs)*](https://arxiv.org/abs/2611.09501);
-please cite it if you use `shoal_emeans()`. shoal is an R interface to their
+in faiss by Gergely Szilvasy, Swann Bessa and Matthijs Douze at Meta FAIR.
+Both ports are validated against fixtures generated from their reference
+implementations, and their licence notices are in
+[`inst/COPYRIGHTS`](https://github.com/belian-earth/shoal/blob/main/inst/COPYRIGHTS).
+The e-means authors ask that work using it cite their paper: Bessa et al.
+(2026), [*e-means: outperforming k-means (in one-tenth the
+epochs)*](https://arxiv.org/abs/2611.09501). shoal is an R interface to their
 work.

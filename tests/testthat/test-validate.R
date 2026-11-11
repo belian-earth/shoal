@@ -75,6 +75,18 @@ test_that("check_positive_number validates correctly", {
   expect_error(check_positive_number(1:2), "single number")
 })
 
+test_that("check_non_negative_number validates correctly", {
+  expect_invisible(check_non_negative_number(0))
+  expect_invisible(check_non_negative_number(0.5))
+  expect_invisible(check_non_negative_number(3L))
+
+  expect_error(check_non_negative_number(-0.1), "non-negative")
+  expect_error(check_non_negative_number(Inf), "non-negative")
+  expect_error(check_non_negative_number(NA_real_), "non-negative")
+  expect_error(check_non_negative_number("a"), "single number")
+  expect_error(check_non_negative_number(1:2), "single number")
+})
+
 test_that("check_positive_integer validates correctly", {
   expect_invisible(check_positive_integer(1L))
   expect_invisible(check_positive_integer(5L))
