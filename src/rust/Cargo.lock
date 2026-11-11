@@ -565,10 +565,12 @@ dependencies = [
  "kodama",
  "linfa",
  "linfa-clustering",
+ "linfa-nn",
  "ndarray 0.16.1",
  "ndarray 0.17.2",
  "petal-clustering",
  "petal-neighbors",
+ "rand",
  "rand_xoshiro",
  "rayon",
 ]

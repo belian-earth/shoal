@@ -16,10 +16,13 @@ extendr-api = '0.8.1'
 kodama = '0.3'
 linfa = { version = '0.8.1', default-features = false }
 linfa-clustering = { version = '0.8.1', default-features = false }
+# linfa's distance and sampler, so shoal's k-means++ start draws as linfa's.
+linfa-nn = '0.8.1'
+rand = '0.8'
 # petal-* are on ndarray 0.17 and linfa is on 0.16, so both are in the tree.
 # The alias keeps which is which explicit at every call site.
 ndarray = '0.17'
-ndarray_linfa = { package = 'ndarray', version = '0.16' }
+ndarray_linfa = { package = 'ndarray', version = '0.16', features = ['rayon'] }
 petal-clustering = '0.13'
 petal-neighbors = '0.18'
 # The EVoC port lives in-tree; its only dependency is rayon, below.
